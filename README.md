@@ -11,6 +11,13 @@ The version of the backend you require depends on the version of Koha you are us
 
 ## Installing
 
+### Post 18.11
+
+* Activate ILL by enabling the `ILLModule` system preference
+* Update the koha configuration to set ILL backend_directory to point to `<backend_directory>/var/lib/koha/${INSTANCE}/plugins/Koha/Illbackends</backend_directory>`
+* Download the latest _.kpz_ file from the [releases](https://gitlab.com/koha-community/plugins/koha-plugin-ill-koha/-/releases) page and install it as any other plugin following the general [plugin install instructions](https://wiki.koha-community.org/wiki/Koha_plugins).
+
+### Prior to 18.11
 * Create a directory in `Koha` called `Illbackends`, so you will end up with `Koha/Illbackends`
 * Clone the repository into this directory, so you will end up with `Koha/Illbackends/koha-ill-koha`
 * In the `koha-ill-koha` directory switch to the branch you wish to use

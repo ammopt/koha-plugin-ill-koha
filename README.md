@@ -26,6 +26,8 @@ The version of the backend you require depends on the version of Koha you are us
 
 ## Configuration
 
+### Post 18.11
+
 The plugin configuration is an HTML text area in which a _YAML_ structure is pasted. The available options
 are maintained on this document. Example:
 
@@ -43,3 +45,6 @@ targets:
     password: remote_koha_ill_userpassword
 framework: ILL
 ```
+### Prior to 18.11
+
+Configuration required local changes to be done in the Base.pm file.

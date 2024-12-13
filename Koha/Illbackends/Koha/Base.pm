@@ -20,7 +20,7 @@ package Koha::Illbackends::Koha::Base;
 
 use Modern::Perl;
 use DateTime;
-use Koha::Illrequestattribute;
+use Koha::ILL::Request::Attribute;
 use Koha::Patrons;
 use LWP::UserAgent;
 use URI;
@@ -344,7 +344,7 @@ sub create {
 
     # ...Populate Illrequestattributes
     while (my ($type, $value) = each %{$request_details}) {
-      Koha::Illrequestattribute->new({
+      Koha::ILL::Request::Attribute->new({
         illrequest_id => $request->illrequest_id,
         type          => $type,
         value         => $value,
@@ -458,7 +458,7 @@ sub migrate {
       $request_details->{migrated_from} = $original_request->illrequest_id;
 
       while (my ($type, $value) = each %{$request_details}) {
-        Koha::Illrequestattribute->new({
+        Koha::ILL::Request::Attribute->new({
           illrequest_id => $new_request->illrequest_id,
           type          => $type,
           value         => $value,

@@ -157,18 +157,18 @@ illrequestattributes store.
 =cut
 
 sub metadata {
-  my ($self, $request) = @_;
-  my $attrs = $request->illrequestattributes;
-  my $id = scalar $attrs->find({type => 'bib_id'});
-  my $title = scalar $attrs->find({type => 'title'});
-  my $author = scalar $attrs->find({type => 'author'});
-  my $target = scalar $attrs->find({type => 'target'});
-  return {
-    ID     => $id ? $id->value : undef,
-    Title  => $title ? $title->value : undef,
-    Author => $author ? $author->value : undef,
-    Target => $target ? $target->value : undef
-  };
+    my ( $self, $request ) = @_;
+    my $attrs  = $request->extended_attributes;
+    my $id     = scalar $attrs->find( { type => 'bib_id' } );
+    my $title  = scalar $attrs->find( { type => 'title' } );
+    my $author = scalar $attrs->find( { type => 'author' } );
+    my $target = scalar $attrs->find( { type => 'target' } );
+    return {
+        ID     => $id     ? $id->value     : undef,
+        Title  => $title  ? $title->value  : undef,
+        Author => $author ? $author->value : undef,
+        Target => $target ? $target->value : undef
+    };
 }
 
 =head3 capabilities
@@ -408,8 +408,8 @@ sub migrate {
         = (
         qw/isbn issn title author dewey subject lccall controlnumber stdid srchany/
         );
-      my $original_attributes = $original_request->illrequestattributes->search(
-        {type => {'-in' => \@recognised_attributes}});
+      my $original_attributes =
+          $original_request->extended_attributes->search( { type => { '-in' => \@recognised_attributes } } );
       my $search_attributes
         = {map { $_->type => $_->value } ($original_attributes->as_list)};
       $search = {%{$search}, %{$search_attributes}};
@@ -480,7 +480,7 @@ sub migrate {
   # Cleanup any outstanding work and close the request.
   elsif ($stage eq 'emigrate') {
     my $new_request = $params->{request};
-    my $from_id = $new_request->illrequestattributes->find(
+    my $from_id = $new_request->extended_attributes->find(
         { type => 'migrated_from' } )->value;
     my $request     = Koha::Illrequests->find($from_id);
 
@@ -529,7 +529,7 @@ sub confirm {
 
   # Turn Illrequestattributes into a plain hashref
   my $value      = {};
-  my $attributes = $params->{request}->illrequestattributes;
+  my $attributes = $params->{request}->extended_attributes;
   foreach my $attr (@{$attributes->as_list}) {
     $value->{$attr->type} = $attr->value;
   }

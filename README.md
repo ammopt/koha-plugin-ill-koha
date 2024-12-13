@@ -4,10 +4,8 @@ This backend provides the ability to create Interlibrary Loan requests by search
 
 ## Getting Started
 
-The version of the backend you require depends on the version of Koha you are using:
-* 17.11 - Use the 17.11 branch if you are using this version of Koha
-* 18.05 - Use the 18.05 branch if you are using this version of Koha
-* master - Use this master branch for 18.11 and upwards
+You should always pick the version closest to your Koha version. For example, if `24.05.*` is the newest
+available version and you are on Koha `v24.11.00`, then you pick the latest `v24.05.*` version of the plugin.
 
 ## Installing
 

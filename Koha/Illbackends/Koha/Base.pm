@@ -20,9 +20,13 @@ package Koha::Illbackends::Koha::Base;
 
 use Modern::Perl;
 use DateTime;
+use JSON qw( encode_json decode_json );
+use HTTP::Request::Common;
 use Koha::ILL::Request::Attribute;
 use Koha::Patrons;
 use LWP::UserAgent;
+use MIME::Base64 qw( decode_base64 encode_base64 );
+use POSIX qw ( floor );
 use URI;
 use URI::Escape;
 use Try::Tiny;
@@ -135,10 +139,12 @@ sub new {
   my $configuration = $plugin->configuration;
   my $targets   = $configuration->{targets};
   my $framework = (defined $configuration->{framework}) ? $configuration->{framework} : 'ILL';
+  my $interface = (defined $configuration->{interface}) ? $configuration->{interface} : 'ILSDI'; # RESTAPI or ILSDI
 
   my $self = {
     targets   => $targets,
     framework => $framework,
+    interface => $interface,
     plugin    => $plugin
   };
   bless($self, $class);
@@ -322,7 +328,9 @@ sub create {
     my $other = $params->{other};
 
     my ($biblionumber, $remote_id)
-      = $self->_add_from_breeding($other->{breedingid}, $self->{framework});
+      = $self->_add_from_breeding($other->{breedingid}, $self->{framework}) if $other->{breedingid};
+
+    $remote_id //= $other->{remote_biblio_id} // '';
 
     my $request_details = {
       target => $other->{target},
@@ -339,7 +347,7 @@ sub create {
     $request->backend($other->{backend});
     $request->placed(DateTime->now);
     $request->updated(DateTime->now);
-    $request->biblio_id($biblionumber);
+    $request->biblio_id($biblionumber) if $other->{breedingid};
     $request->store;
 
     # ...Populate Illrequestattributes
@@ -767,6 +775,49 @@ sub _search {
     errors          => $mock->param('errconn')
   };
 
+  my @rest_results = ();
+  my $ua = LWP::UserAgent->new;
+  foreach my $target_key ( keys %{ $self->{targets} } ) {
+
+      my $target = $self->{targets}->{$target_key};
+      next if ( !$target->{url} );
+
+      my $encoded_login  = encode_base64( $target->{user} . ':' . $target->{password} );
+      my @search_headers = (
+          'Accept'        => 'application/json',
+          'Authorization' => "Basic $encoded_login"
+      );
+
+      my $search_params;
+      if ( $search->{issn} ) {
+          push( @{ $search_params->{'-or'} }, [ { 'issn' => $search->{issn} } ] );
+      }
+
+      if ( $search->{title} ) {
+          push( @{ $search_params->{'-or'} }, [ { 'title' => { 'like' => '%' . $search->{title} . '%' } } ] );
+      }
+
+      # Calculate which page of result we're requesting
+      my $start      = 0;
+      my $pageLength = 20;
+
+      my $page            = floor( $start / $pageLength ) + 1;
+      my $search_response = $ua->request(
+          GET $target->{url} . "/api/v1/biblios?q=" . encode_json($search_params),
+          @search_headers
+      );
+
+      if ( !$search_response->is_success ) {
+          die 'error fetching search results';    # improve this
+      }
+      my $decoded_content = decode_json( $search_response->decoded_content );
+
+      foreach my $result ( @{$decoded_content} ) {
+        $result->{server} = $target_key;
+        $result->{remote_biblio_id} = $result->{biblio_id};
+        push @{ $response->{results} }, $result;
+      }
+  }
   # Return search results
   return $response;
 }

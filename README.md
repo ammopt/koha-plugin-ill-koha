@@ -24,6 +24,21 @@ available version and you are on Koha `v24.11.00`, then you pick the latest `v24
 
 ## Configuration
 
+### REST API example
+
+```
+targets:
+  RemoteKoha:
+    url: https://kohaurl.com
+    user: rest_user_name
+    password: rest_user_pass
+    interface: RESTAPI
+framework: ILL
+```
+
+Requires RemoteKoha to have `RESTBasicAuth` enabled.
+The YAML configuration may have both RESTAPI or ILSDI (default) interface servers.
+
 ### Post 18.11
 
 The plugin configuration is an HTML text area in which a _YAML_ structure is pasted. The available options

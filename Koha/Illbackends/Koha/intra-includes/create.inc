@@ -110,6 +110,7 @@
           _ "&amp;branchcode=" _ whole.branchcode
           _ "&amp;author=" _ result.author
           _ "&amp;title=" _ result.title
+          _ "&amp;remote_biblio_id=" _ result.remote_biblio_id
           _ "&amp;breedingid=" _ result.breedingid %]
           <td>
             <a class="btn btn-sm btn-default" href="[% target %]">Request this item</a>

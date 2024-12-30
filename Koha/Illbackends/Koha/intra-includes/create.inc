@@ -11,9 +11,9 @@
 [% IF whole.stage == "search_form" %]
     <h2>Search Koha Partners</h2>
     <form class="validated" method="post" action="/cgi-bin/koha/ill/ill-requests.pl">
+        [% INCLUDE 'csrf-token.inc' %]
         <input type="hidden" name="stage" value="[% whole.stage %]"/>
         <input type="hidden" name="method" value="[% whole.method %]"/>
-        <input type="hidden" name="op" value="[% whole.method %]"/>
         <input name="backend" id="method" value="[% whole.value.other.backend %]" type="hidden"/>
         <fieldset class="rows">
         <legend>Search Koha Partners</legend>

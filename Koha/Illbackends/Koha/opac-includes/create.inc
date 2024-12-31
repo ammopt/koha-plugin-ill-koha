@@ -45,7 +45,7 @@
             </ol>
         </fieldset>
         <fieldset class="action">
-            <input type="submit" value="Search"/>
+            <input type="submit" class="btn btn-primary" value="Search"/>
             <a class="cancel" href="/cgi-bin/koha/opac-illrequests.pl">Cancel</a>
         </fieldset>
     </form>

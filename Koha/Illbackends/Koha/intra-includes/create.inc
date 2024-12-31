@@ -41,7 +41,7 @@
             </ol>
         </fieldset>
         <fieldset class="rows">
-            <legend>Borrower Options</legend>
+            <legend>Patron options</legend>
             <ol>
                 <li>
                     <label class="required" for="cardnumber">Card number, username or surname: </label>
@@ -62,7 +62,7 @@
             </ol>
         </fieldset>
         <fieldset class="action">
-            <input type="submit" value="Search"/>
+            <input type="submit" class="btn btn-primary" value="Search"/>
             <a class="cancel" href="/cgi-bin/koha/ill/ill-requests.pl">Cancel</a>
         </fieldset>
     </form>

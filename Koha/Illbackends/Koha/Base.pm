@@ -193,6 +193,8 @@ sub capabilities {
     # We don't implement unmediated for now
     # unmediated_ill => sub { $self->confirm(@_); }
 
+    provides_backend_availability_check => sub { return 1; },
+
     migrate => sub { $self->migrate(@_); }
   };
   return $capabilities->{$name};
@@ -250,7 +252,7 @@ sub create {
       value   => $params,
     };
   }
-  elsif ($stage eq 'search_form') {
+  elsif ($stage eq 'search_form' || $stage eq 'form') {
 
     # Received search query in 'other'; perform search...
     my ($brw_count, $brw) = _validate_borrower($other->{'cardnumber'}, $stage);
@@ -743,6 +745,23 @@ sub status {
     stage   => 'fake',
     value   => {},
   };
+}
+
+=head3 availability_check_info
+
+Utilized if the AutoILLBackend sys pref is enabled
+
+=cut
+
+sub availability_check_info {
+    my ( $self, $params ) = @_;
+
+    my $endpoint = '/api/v1/contrib/' . $self->name . '/ill_backend_availability_koha?metadata=';
+
+    return {
+        endpoint => $endpoint,
+        name     => $self->name,
+    };
 }
 
 #### Helpers

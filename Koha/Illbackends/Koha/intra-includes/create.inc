@@ -41,7 +41,7 @@
             </ol>
         </fieldset>
         <fieldset class="rows">
-            <legend>Borrower Options</legend>
+            <legend>Patron options</legend>
             <ol>
                 <li>
                     <label class="required" for="cardnumber">Card number, username or surname: </label>

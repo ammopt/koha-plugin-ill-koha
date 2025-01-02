@@ -169,10 +169,14 @@ sub metadata {
     my $title  = scalar $attrs->find( { type => 'title' } );
     my $author = scalar $attrs->find( { type => 'author' } );
     my $target = scalar $attrs->find( { type => 'target' } );
+    my $isbn   = scalar $attrs->find( { type => 'isbn' } );
+    my $issn   = scalar $attrs->find( { type => 'issn' } );
     return {
         ID     => $id     ? $id->value     : undef,
         Title  => $title  ? $title->value  : undef,
         Author => $author ? $author->value : undef,
+        ISBN   => $isbn   ? $isbn->value : undef,
+        ISSN   => $issn   ? $issn->value : undef,
         Target => $target ? $target->value : undef
     };
 }
@@ -339,6 +343,8 @@ sub create {
       bib_id => $remote_id,
       title  => $other->{title},
       author => $other->{author},
+      isbn   => $other->{isbn},
+      issn   => $other->{issn},
     };
 
     # ...Populate Illrequest
@@ -358,7 +364,7 @@ sub create {
         illrequest_id => $request->illrequest_id,
         type          => $type,
         value         => $value,
-      })->store;
+      })->store if defined $value;
     }
 
     # -> create response.

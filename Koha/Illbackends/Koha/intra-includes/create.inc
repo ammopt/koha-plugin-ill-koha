@@ -120,6 +120,8 @@
           _ "&amp;branchcode=" _ whole.branchcode
           _ "&amp;author=" _ result.author
           _ "&amp;title=" _ result.title
+          _ "&amp;issn=" _ result.issn
+          _ "&amp;isbn=" _ result.isbn
           _ "&amp;remote_biblio_id=" _ result.remote_biblio_id
           _ "&amp;breedingid=" _ result.breedingid %]
           <td>

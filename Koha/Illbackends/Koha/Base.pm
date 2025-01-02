@@ -809,6 +809,7 @@ sub _search {
 
       my $search_params;
       if ( $search->{issn} ) {
+          $search->{issn} =~ s/^\s+|\s+$//g;
           push( @{ $search_params->{'-or'} }, [ { 'issn' => $search->{issn} } ] );
       }
 

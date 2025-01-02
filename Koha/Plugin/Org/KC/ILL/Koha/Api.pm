@@ -34,6 +34,15 @@ sub Backend_Availability {
         srchany       => $metadata->{srchany},
     };
 
+    if ( (!$metadata->{issn} && !$metadata->{isbn}) && !$metadata->{title} ) {
+        return $c->render(
+            status  => 404,
+            openapi => {
+                error => 'Missing title or issn/isbn',
+            }
+        );
+    }
+
     my $results = $backend->_search($search);
     my %seen;
     my @unique_servers = grep { ! $seen{$_}++ } map { $_->{server} } @{ $results->{results} };
@@ -46,11 +55,11 @@ sub Backend_Availability {
             }
         );
     }
-    
+
     return $c->render(
         status  => 404,
         openapi => {
-            error => 'Still in development',
+            error => 'Not found',
         }
     );
 }

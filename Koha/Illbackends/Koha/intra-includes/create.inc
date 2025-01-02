@@ -90,6 +90,7 @@
           <th id="partner">Partner</th>
           <th id="title">Title</th>
           <th id="author">Author</th>
+          <th id="libraries">Libraries</th>
           <th id="isbn">ISBN</th>
           <th id="issn">ISSN</th>
           <th id="select">Select?</th>
@@ -101,6 +102,7 @@
           <td>[% result.server %]</td>
           <td>[% result.title %]</td>
           <td>[% result.author %]</td>
+          <td>[% result.libraries %]</td>
           <td>[% result.isbn %]</td>
           <td>[% result.issn %]</td>
           [% target = "/cgi-bin/koha/ill/ill-requests.pl"

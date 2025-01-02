@@ -801,36 +801,55 @@ sub _search {
       my $target = $self->{targets}->{$target_key};
       next if ( !$target->{url} );
 
-      my $encoded_login  = encode_base64( $target->{user} . ':' . $target->{password} );
-      my @search_headers = (
-          'Accept'        => 'application/json',
-          'Authorization' => "Basic $encoded_login"
-      );
-
       my $search_params;
       if ( $search->{issn} ) {
           $search->{issn} =~ s/^\s+|\s+$//g;
           push( @{ $search_params->{'-or'} }, [ { 'issn' => $search->{issn} } ] );
+      } elsif ( $search->{isbn} ) {
+          $search->{isbn} =~ s/^\s+|\s+$//g;
+          push( @{ $search_params->{'-or'} }, [ { 'isbn' => $search->{isbn} } ] );
+      } else {
+          if ( $search->{title} ) {
+              push( @{ $search_params->{'-or'} }, [ { 'title' => { 'like' => '%' . $search->{title} . '%' } } ] );
+          }
       }
 
-      if ( $search->{title} ) {
-          push( @{ $search_params->{'-or'} }, [ { 'title' => { 'like' => '%' . $search->{title} . '%' } } ] );
-      }
+      my $encoded_login = encode_base64( $target->{user} . ':' . $target->{password} );
+      my @req_headers   = (
+          'Accept'        => 'application/json',
+          'Authorization' => "Basic $encoded_login"
+      );
 
-      # Calculate which page of result we're requesting
-      my $start      = 0;
-      my $pageLength = 20;
-
-      my $page            = floor( $start / $pageLength ) + 1;
+      # Only fetch 3 biblios, or the search will take too long and timeout
+      # TODO: Make this configurable (?)
       my $search_response = $ua->request(
-          GET $target->{url} . "/api/v1/biblios?q=" . encode_json($search_params),
-          @search_headers
+          GET $target->{url} . "/api/v1/biblios?q=" . encode_json($search_params).'&_per_page=3',
+          @req_headers
       );
 
       if ( !$search_response->is_success ) {
-          die 'error fetching search results';    # improve this
+          _warn_api_errors_for_warning(
+              'Unable to fetch biblios information for target ' . $target_key,
+              $search_response
+          );
+          return;
       }
       my $decoded_content = decode_json( $search_response->decoded_content );
+
+      my $libraries = $ua->request(
+          GET $target->{url} . "/api/v1/libraries?_per_page=-1",
+          @req_headers
+      );
+
+      if ( $libraries->is_success ) {
+          my $rest_libraries = decode_json( $libraries->decoded_content );
+          _add_libraries_info( $decoded_content, $rest_libraries, $target->{url}, $encoded_login );
+      } else {
+          _warn_api_errors_for_warning(
+              'Unable to fetch libraries information for target ' . $target_key,
+              $libraries
+          );
+      }
 
       foreach my $result ( @{$decoded_content} ) {
         $result->{server} = $target_key;
@@ -840,6 +859,98 @@ sub _search {
   }
   # Return search results
   return $response;
+}
+
+=head3 _add_libraries_info
+
+  _add_libraries_info( $decoded_content, $rest_libraries, $target->{url}, $encoded_login );
+
+Prepares a response for the UI by fetching items information and
+converting it into a human-readable format.
+
+=cut
+
+sub _add_libraries_info {
+    my $response      = shift;
+    my $libraries     = shift;
+    my $base_url      = shift;
+    my $encoded_login = shift;
+    my $ua            = LWP::UserAgent->new;
+    my $out           = [];
+
+    foreach my $record ( @{$response} ) {
+
+        my @items_req_headers = (
+            'Accept'        => 'application/json',
+            'Authorization' => "Basic $encoded_login"
+        );
+
+        my $items = $ua->request(
+            GET sprintf(
+                '%s/api/v1/biblios/%s/items?_per_page=-1',
+                $base_url,
+                $record->{biblio_id},
+            ),
+            @items_req_headers
+        );
+
+        my $items_response = decode_json( $items->decoded_content );
+        if ( !$items->is_success ) {
+            _warn_api_errors_for_warning(
+                'Unable to fetch items information for biblio ' . $record->{biblio_id},
+                $items_response
+            );
+            return;
+        }
+
+        my $item_holdings;
+        my @items_array;
+        foreach my $item ( @{$items_response} ) {
+
+            $item->{home_library_id} =~ s/^\s+|\s+$//g;
+            my ($filtered_library) = grep { $_->{library_id} eq $item->{home_library_id}; } @{$libraries};
+
+            push @items_array, { $filtered_library->{name} => $item->{public_notes} };
+        }
+
+        @items_array = sort { ( keys %$a )[0] cmp( keys %$b )[0] } @items_array;
+        foreach my $item (@items_array) {
+            $item_holdings .= '<strong>' . ( keys %$item )[0] . '</strong>';
+            $item_holdings .= ( values %$item )[0] ? ' (' . ( values %$item )[0] . ')' : '';
+            $item_holdings .= '<br>';
+        }
+
+        $record->{libraries} = $item_holdings;
+    }
+}
+
+=head3 _warn_api_errors_for_warning
+
+  my $error_messages = _get_api_errors_for_warning($errors);
+
+This function takes an arrayref of error hashrefs and warns a formatted
+string of error messages.
+
+=cut
+
+sub _warn_api_errors_for_warning {
+    my $message = shift;
+    my $response = shift;
+
+    my $errors = $response->{errors} || [ $response->status_line ];
+
+    my $items_error_message_str;
+    foreach my $error ( @{$errors} ) {
+      if (ref $error eq 'HASH') {
+          foreach my $key ( keys %{$error} ) {
+              $items_error_message_str .= "$key: $error->{$key}, ";
+          }
+          $items_error_message_str .= "\n";
+      }else{
+          $items_error_message_str .= "$error\n";
+      }
+    }
+    warn 'Koha2Koha ILL backend: ' . $message . '. Error: ' . $items_error_message_str;
 }
 
 =head3 _fail

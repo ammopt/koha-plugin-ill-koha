@@ -100,7 +100,13 @@
         [% FOREACH result IN whole.value.results %]
         <tr>
           <td>[% result.server %]</td>
-          <td>[% result.title %]</td>
+          <td>
+            [% IF result.record_link %]
+              <a target="_blank" href="[% result.record_link | url %]"><i class="fa fa-fw fa-external-link-square"></i>[% result.title %]</a>
+            [% ELSE %]
+              [% result.title %]
+            [% END %]
+          </td>
           <td>[% result.author %]</td>
           <td>[% result.libraries %]</td>
           <td>[% result.isbn %]</td>

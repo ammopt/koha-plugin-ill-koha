@@ -853,6 +853,8 @@ sub _search {
 
       foreach my $result ( @{$decoded_content} ) {
         $result->{server} = $target_key;
+        $result->{record_link} =
+            $target->{url} . "/cgi-bin/koha/opac-detail.pl?biblionumber=" . $result->{biblio_id};
         $result->{remote_biblio_id} = $result->{biblio_id};
         push @{ $response->{results} }, $result;
       }

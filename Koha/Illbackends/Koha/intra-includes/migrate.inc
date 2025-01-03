@@ -71,7 +71,9 @@
               <th id="partner">Partner</th>
               <th id="title">Title</th>
               <th id="author">Author</th>
+              <th id="libraries">Libraries</th>
               <th id="isbn">ISBN</th>
+              <th id="issn">ISSN</th>
               <th id="select">Select?</th>
             </tr>
           </thead>
@@ -79,9 +81,17 @@
             [% FOREACH result IN whole.value.results %]
             <tr>
               <td>[% result.server %]</td>
-              <td>[% result.title %]</td>
+              <td>
+                [% IF result.record_link %]
+                  <a target="_blank" href="[% result.record_link | url %]"><i class="fa fa-fw fa-external-link-square"></i>[% result.title %]</a>
+                [% ELSE %]
+                  [% result.title %]
+                [% END %]
+              </td>
               <td>[% result.author %]</td>
+              <td>[% result.libraries %]</td>
               <td>[% result.isbn %]</td>
+              <td>[% result.issn %]</td>
               [% target = "/cgi-bin/koha/ill/ill-requests.pl"
               _ "?method=" _ whole.method
               _ "&amp;target=" _ result.server

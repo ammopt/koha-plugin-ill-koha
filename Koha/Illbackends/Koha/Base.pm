@@ -409,7 +409,7 @@ sub migrate {
   if (!$stage || $stage eq 'immigrate') {
 
     # Fetch original request details
-    my $original_request = Koha::Illrequests->find($other->{illrequest_id});
+    my $original_request = Koha::ILL::Requests->find($other->{illrequest_id});
 
     # Initiate immigration search
     if (!$step || $step eq 'init') {
@@ -498,7 +498,7 @@ sub migrate {
     my $new_request = $params->{request};
     my $from_id = $new_request->extended_attributes->find(
         { type => 'migrated_from' } )->value;
-    my $request     = Koha::Illrequests->find($from_id);
+    my $request     = Koha::ILL::Requests->find($from_id);
 
     # Just cancel the original request now it's been migrated away
     $request->status("REQREV");

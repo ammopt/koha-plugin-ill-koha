@@ -453,7 +453,7 @@ sub migrate {
     # Import from search results
     elsif ($step eq 'search_results') {
       my ($biblionumber, $remote_id)
-        = $self->_add_from_breeding($other->{breedingid}, $self->{framework});
+        = $self->_add_from_breeding($other->{breedingid}, $self->{framework}) if $other->{breedingid};
 
       my $new_request = $params->{request};
       $new_request->borrowernumber($original_request->borrowernumber);
@@ -474,11 +474,18 @@ sub migrate {
       $request_details->{migrated_from} = $original_request->illrequest_id;
 
       while (my ($type, $value) = each %{$request_details}) {
-        Koha::ILL::Request::Attribute->new({
-          illrequest_id => $new_request->illrequest_id,
-          type          => $type,
-          value         => $value,
-        })->store;
+        eval {
+          Koha::ILL::Request::Attribute->new(
+              {
+                  illrequest_id => $new_request->illrequest_id,
+                  type          => $type,
+                  value         => $value,
+              }
+          )->store if defined $value;
+        };
+        if ($@) {
+          warn "Error adding attribute: $@";
+        }
       }
 
       return {

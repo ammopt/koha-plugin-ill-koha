@@ -32,7 +32,6 @@ targets:
     url: https://kohaurl.com
     user: rest_user_name
     password: rest_user_pass
-    interface: RESTAPI
 framework: ILL
 ```
 

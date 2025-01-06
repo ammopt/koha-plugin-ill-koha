@@ -139,12 +139,10 @@ sub new {
   my $configuration = $plugin->configuration;
   my $targets   = $configuration->{targets};
   my $framework = (defined $configuration->{framework}) ? $configuration->{framework} : 'ILL';
-  my $interface = (defined $configuration->{interface}) ? $configuration->{interface} : 'ILSDI'; # RESTAPI or ILSDI
 
   my $self = {
     targets   => $targets,
     framework => $framework,
-    interface => $interface,
     plugin    => $plugin
   };
   bless($self, $class);

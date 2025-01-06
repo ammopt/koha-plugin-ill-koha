@@ -24,12 +24,17 @@ available version and you are on Koha `v24.11.00`, then you pick the latest `v24
 
 ## Configuration
 
+### REST API
+
+The default behavior is to utilize the configured z39.50 server as well as its configured ILSDI endpoint.
+However, if a 'rest_api_endpoint' if configured, the search will be performed using the REST API instead.
+
 ### REST API example
 
 ```
 targets:
   RemoteKoha:
-    url: https://kohaurl.com
+    rest_api_endpoint: https://kohaurl.com/api/v1
     user: rest_user_name
     password: rest_user_pass
 framework: ILL

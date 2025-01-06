@@ -810,8 +810,7 @@ sub _search {
   foreach my $target_key ( keys %{ $self->{targets} } ) {
 
       my $target = $self->{targets}->{$target_key};
-      next if ( !$target->{url} );
-
+      next if ( !$target->{rest_api_endpoint} );
       my $search_params;
       if ( $search->{issn} ) {
           $search->{issn} =~ s/^\s+|\s+$//g;
@@ -834,7 +833,7 @@ sub _search {
       # Only fetch 3 biblios, or the search will take too long and timeout
       # TODO: Make this configurable (?)
       my $search_response = $ua->request(
-          GET $target->{url} . "/api/v1/biblios?q=" . encode_json($search_params).'&_per_page=3',
+          GET $target->{rest_api_endpoint} . "/biblios?q=" . encode_json($search_params).'&_per_page=3',
           @req_headers
       );
 
@@ -848,13 +847,13 @@ sub _search {
       my $decoded_content = decode_json( $search_response->decoded_content );
 
       my $libraries = $ua->request(
-          GET $target->{url} . "/api/v1/libraries?_per_page=-1",
+        GET $target->{rest_api_endpoint} . "/libraries?_per_page=-1",
           @req_headers
       );
 
       if ( $libraries->is_success ) {
           my $rest_libraries = decode_json( $libraries->decoded_content );
-          _add_libraries_info( $decoded_content, $rest_libraries, $target->{url}, $encoded_login );
+        _add_libraries_info( $decoded_content, $rest_libraries, $target->{rest_api_endpoint}, $encoded_login );
       } else {
           _warn_api_errors_for_warning(
               'Unable to fetch libraries information for target ' . $target_key,
@@ -865,7 +864,7 @@ sub _search {
       foreach my $result ( @{$decoded_content} ) {
         $result->{server} = $target_key;
         $result->{record_link} =
-            $target->{url} . "/cgi-bin/koha/opac-detail.pl?biblionumber=" . $result->{biblio_id};
+            $target->{rest_api_endpoint} . "/cgi-bin/koha/opac-detail.pl?biblionumber=" . $result->{biblio_id};
         $result->{remote_biblio_id} = $result->{biblio_id};
         push @{ $response->{results} }, $result;
       }
@@ -876,7 +875,7 @@ sub _search {
 
 =head3 _add_libraries_info
 
-  _add_libraries_info( $decoded_content, $rest_libraries, $target->{url}, $encoded_login );
+_add_libraries_info( $decoded_content, $rest_libraries, $target->{rest_api_endpoint}, $encoded_login );
 
 Prepares a response for the UI by fetching items information and
 converting it into a human-readable format.
@@ -900,7 +899,7 @@ sub _add_libraries_info {
 
         my $items = $ua->request(
             GET sprintf(
-                '%s/api/v1/biblios/%s/items?_per_page=-1',
+                '%s/biblios/%s/items?_per_page=-1',
                 $base_url,
                 $record->{biblio_id},
             ),

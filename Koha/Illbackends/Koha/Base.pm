@@ -162,20 +162,22 @@ illrequestattributes store.
 
 sub metadata {
     my ( $self, $request ) = @_;
-    my $attrs  = $request->extended_attributes;
-    my $id     = scalar $attrs->find( { type => 'bib_id' } );
-    my $title  = scalar $attrs->find( { type => 'title' } );
-    my $author = scalar $attrs->find( { type => 'author' } );
-    my $target = scalar $attrs->find( { type => 'target' } );
-    my $isbn   = scalar $attrs->find( { type => 'isbn' } );
-    my $issn   = scalar $attrs->find( { type => 'issn' } );
+    my $attrs   = $request->extended_attributes;
+    my $id      = scalar $attrs->find( { type => 'bib_id' } );
+    my $item_id = scalar $attrs->find( { type => 'item_id' } );
+    my $title   = scalar $attrs->find( { type => 'title' } );
+    my $author  = scalar $attrs->find( { type => 'author' } );
+    my $target  = scalar $attrs->find( { type => 'target' } );
+    my $isbn    = scalar $attrs->find( { type => 'isbn' } );
+    my $issn    = scalar $attrs->find( { type => 'issn' } );
     return {
-        ID     => $id     ? $id->value     : undef,
-        Title  => $title  ? $title->value  : undef,
-        Author => $author ? $author->value : undef,
-        ISBN   => $isbn   ? $isbn->value : undef,
-        ISSN   => $issn   ? $issn->value : undef,
-        Target => $target ? $target->value : undef
+        ID      => $id      ? $id->value      : undef,
+        "Item ID" => $item_id ? $item_id->value : undef,
+        Title   => $title   ? $title->value   : undef,
+        Author  => $author  ? $author->value  : undef,
+        ISBN    => $isbn    ? $isbn->value    : undef,
+        ISSN    => $issn    ? $issn->value    : undef,
+        Target  => $target  ? $target->value  : undef
     };
 }
 
@@ -339,6 +341,7 @@ sub create {
     my $request_details = {
       target => $other->{target},
       bib_id => $remote_id,
+      ( $other->{remote_item_id} ? ( item_id => $other->{remote_item_id} ) : () ),
       title  => $other->{title},
       author => $other->{author},
       isbn   => $other->{isbn},
@@ -915,24 +918,23 @@ sub _add_libraries_info {
             return;
         }
 
-        my $item_holdings;
         my @items_array;
         foreach my $item ( @{$items_response} ) {
-
             $item->{home_library_id} =~ s/^\s+|\s+$//g;
             my ($filtered_library) = grep { $_->{library_id} eq $item->{home_library_id}; } @{$libraries};
 
-            push @items_array, { $filtered_library->{name} => $item->{public_notes} };
+            push @items_array,
+            {
+                libraryname  => $filtered_library->{name},
+                public_notes => $item->{public_notes},
+                itemnumber   => $item->{item_id}
+            };
+
         }
 
-        @items_array = sort { ( keys %$a )[0] cmp( keys %$b )[0] } @items_array;
-        foreach my $item (@items_array) {
-            $item_holdings .= '<strong>' . ( keys %$item )[0] . '</strong>';
-            $item_holdings .= ( values %$item )[0] ? ' (' . ( values %$item )[0] . ')' : '';
-            $item_holdings .= '<br>';
-        }
+        @items_array = sort { $a->{libraryname} cmp $b->{libraryname} } @items_array;
 
-        $record->{libraries} = $item_holdings;
+        $record->{api_items} = \@items_array;
     }
 }
 

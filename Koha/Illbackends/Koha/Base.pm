@@ -162,22 +162,25 @@ illrequestattributes store.
 
 sub metadata {
     my ( $self, $request ) = @_;
-    my $attrs   = $request->extended_attributes;
-    my $id      = scalar $attrs->find( { type => 'bib_id' } );
-    my $item_id = scalar $attrs->find( { type => 'item_id' } );
-    my $title   = scalar $attrs->find( { type => 'title' } );
-    my $author  = scalar $attrs->find( { type => 'author' } );
-    my $target  = scalar $attrs->find( { type => 'target' } );
-    my $isbn    = scalar $attrs->find( { type => 'isbn' } );
-    my $issn    = scalar $attrs->find( { type => 'issn' } );
+    my $attrs                    = $request->extended_attributes;
+    my $id                       = scalar $attrs->find( { type => 'bib_id' } );
+    my $item_id                  = scalar $attrs->find( { type => 'item_id' } );
+    my $title                    = scalar $attrs->find( { type => 'title' } );
+    my $author                   = scalar $attrs->find( { type => 'author' } );
+    my $target                   = scalar $attrs->find( { type => 'target' } );
+    my $isbn                     = scalar $attrs->find( { type => 'isbn' } );
+    my $issn                     = scalar $attrs->find( { type => 'issn' } );
+    my $previous_requested_items = scalar $attrs->find( { type => 'previous_requested_items' } );
+
     return {
-        ID      => $id      ? $id->value      : undef,
-        "Item ID" => $item_id ? $item_id->value : undef,
-        Title   => $title   ? $title->value   : undef,
-        Author  => $author  ? $author->value  : undef,
-        ISBN    => $isbn    ? $isbn->value    : undef,
-        ISSN    => $issn    ? $issn->value    : undef,
-        Target  => $target  ? $target->value  : undef
+        ID                         => $id                       ? $id->value                       : undef,
+        "Item ID"                  => $item_id                  ? $item_id->value                  : undef,
+        Title                      => $title                    ? $title->value                    : undef,
+        Author                     => $author                   ? $author->value                   : undef,
+        ISBN                       => $isbn                     ? $isbn->value                     : undef,
+        ISSN                       => $issn                     ? $issn->value                     : undef,
+        Target                     => $target                   ? $target->value                   : undef,
+        "Previous requested items" => $previous_requested_items ? $previous_requested_items->value : undef
     };
 }
 
@@ -434,6 +437,11 @@ sub migrate {
       # Perform a search
       my $results = $self->_search($search);
 
+      my $previous_requested_items = $original_request->extended_attributes->find( { type => 'previous_requested_items' } );
+      my $current_item             = $original_request->extended_attributes->find( { type => 'item_id' } );
+
+      my @previous_requested_items_array = $previous_requested_items && $previous_requested_items->value ? split( /\|/, $previous_requested_items->value ) : ();
+
       # Construct the response
       my $response = {
         status        => 200,
@@ -445,6 +453,8 @@ sub migrate {
         step          => 'search_results',
         illrequest_id => $other->{illrequest_id},
         backend       => $self->name,
+        previous_requested_items => \@previous_requested_items_array,
+        ( $current_item ? ( current_item => $current_item->value ) : () ),
         query         => $search,
         params        => $params
       };
@@ -456,6 +466,8 @@ sub migrate {
       my ($biblionumber, $remote_id)
         = $self->_add_from_breeding($other->{breedingid}, $self->{framework}) if $other->{breedingid};
 
+      $remote_id //= $other->{remote_biblio_id} // '';
+
       my $new_request = $params->{request};
       $new_request->borrowernumber($original_request->borrowernumber);
       $new_request->branchcode($original_request->branchcode);
@@ -466,12 +478,47 @@ sub migrate {
       $new_request->biblio_id($biblionumber);
       $new_request->store;
 
-      my $request_details = {
-        target => $other->{target},
-        bib_id => $remote_id,
-        title  => $other->{title},
-        author => $other->{author},
-      };
+      my $request_details;
+      if ( $other->{remote_item_id} ) {
+          my $current_item = $new_request->extended_attributes->find( { type => 'item_id' } );
+
+          my $previous_requested_items =
+              $params->{request}->extended_attributes->find( { type => 'previous_requested_items' } );
+
+          my $new_previous_requested_items;
+          if (   $previous_requested_items
+              && $previous_requested_items->value
+              && $current_item
+              && $current_item->value )
+          {
+              my @previous_requested_items_array = split( /\|/, $previous_requested_items->value );
+
+              unless ( grep { $_ eq $current_item->value } @previous_requested_items_array ) {
+                  push @previous_requested_items_array, $current_item->value;
+              }
+              my $string = join "|", @previous_requested_items_array;
+
+              $request_details->{previous_requested_items} = $string;
+          } else {
+              $request_details->{previous_requested_items} = $current_item->value;
+          }
+
+          $request_details->{item_id} = $other->{remote_item_id};
+
+          my $previous_requested_items_attr = $new_request->extended_attributes->find( { type => 'previous_requested_items' } );
+          $previous_requested_items_attr->delete if $previous_requested_items_attr;
+          my $bib_id_attr = $new_request->extended_attributes->find( { type => 'bib_id' } );
+          $bib_id_attr->delete if $bib_id_attr;
+          my $item_id_attr = $new_request->extended_attributes->find( { type => 'item_id' } );
+          $item_id_attr->delete if $item_id_attr;
+      }
+
+      $request_details->{target}        = $other->{target};
+      $request_details->{bib_id}        = $remote_id;
+      $request_details->{title}         = $other->{title};
+      $request_details->{author}        = $other->{author};
+      $request_details->{isbn}          = $other->{isbn};
+      $request_details->{issn}          = $other->{issn};
       $request_details->{migrated_from} = $original_request->illrequest_id;
 
       while (my ($type, $value) = each %{$request_details}) {

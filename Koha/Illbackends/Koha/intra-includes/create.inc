@@ -124,10 +124,10 @@
           _ "&amp;breedingid=" _ result.breedingid %]
           <td>
             [% IF result.api_items %]
-              <table>
+              <table class="w-100">
                   [% FOREACH item IN result.api_items %]
                   <tr>
-                    <td>
+                    <td class="w-100">
                       <strong>[% item.libraryname | $raw %]</strong>
                       [% IF item.public_notes %]
                         ([% item.public_notes | $raw %])

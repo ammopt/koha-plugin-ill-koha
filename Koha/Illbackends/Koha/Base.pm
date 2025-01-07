@@ -171,6 +171,7 @@ sub metadata {
     my $target                   = scalar $attrs->find( { type => 'target' } );
     my $isbn                     = scalar $attrs->find( { type => 'isbn' } );
     my $issn                     = scalar $attrs->find( { type => 'issn' } );
+    my $doi                      = scalar $attrs->find( { type => 'doi' } );
     my $previous_requested_items = scalar $attrs->find( { type => 'previous_requested_items' } );
 
     return {
@@ -180,6 +181,7 @@ sub metadata {
         Author                     => $author                   ? $author->value                   : undef,
         ISBN                       => $isbn                     ? $isbn->value                     : undef,
         ISSN                       => $issn                     ? $issn->value                     : undef,
+        DOI                        => $doi                      ? $doi->value                      : undef,
         Target                     => $target                   ? $target->value                   : undef,
         "Previous requested items" => $previous_requested_items ? $previous_requested_items->value : undef
     };
@@ -313,7 +315,7 @@ sub create {
         stdid         => $other->{stdid},
         srchany       => $other->{srchany},
       };
-      my $results = $self->_search($search);
+      my $results = $self->_search($search, $other);
 
       # Construct the response
       my $response = {
@@ -429,7 +431,7 @@ sub migrate {
       $search = {%{$search}, %{$search_attributes}};
 
       # Perform a search
-      my $results = $self->_search($search);
+      my $results = $self->_search($search, $other);
 
       my $previous_requested_items = $original_request->extended_attributes->find( { type => 'previous_requested_items' } );
       my $current_item             = $original_request->extended_attributes->find( { type => 'item_id' } );
@@ -819,15 +821,18 @@ sub availability_check_info {
 
 =head3 _search
 
-  my $response = $self->_search($query);
+  my $response = $self->_search($query, $other);
 
 Given a search query hashref, perform a Z3950 search against the specified
 targets and return the results (and add the results to the reserviour).
 
+$other is a hashref of additional information which may be used by the
+backend.
+
 =cut
 
 sub _search {
-  my ($self, $search) = @_;
+  my ($self, $search, $other) = @_;
 
   # Mock C4::Template object used for passing parameters
   # (Z3950Search compatabilty shim)
@@ -906,6 +911,7 @@ sub _search {
         $result->{record_link} =
             $target->{rest_api_endpoint} . "/cgi-bin/koha/opac-detail.pl?biblionumber=" . $result->{biblio_id};
         $result->{remote_biblio_id} = $result->{biblio_id};
+        $result->{doi} = $other->{doi};
         push @{ $response->{results} }, $result;
       }
   }
@@ -1103,6 +1109,7 @@ sub _get_request_details {
       author  => $request->{author},
       isbn    => $request->{isbn},
       issn    => $request->{issn},
+      doi     => $request->{doi},
   };
 }
 

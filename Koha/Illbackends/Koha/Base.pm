@@ -446,6 +446,7 @@ sub migrate {
 
       # Construct the response
       my $response = {
+        cwd           => dirname(__FILE__),
         status        => 200,
         message       => "",
         error         => 0,

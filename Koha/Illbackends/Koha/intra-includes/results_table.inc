@@ -1,3 +1,4 @@
+[% IF whole.value.results %]
 <table>
       <thead>
         <tr>
@@ -27,9 +28,11 @@
           _ "?method=" _ whole.method
           _ "&amp;target=" _ result.server
           _ "&amp;stage=" _ whole.stage
+          _ "&amp;step=" _ whole.step
           _ "&amp;backend=" _ whole.backend
           _ "&amp;borrowernumber=" _ whole.borrowernumber
           _ "&amp;branchcode=" _ whole.branchcode
+          _ "&amp;illrequest_id=" _ whole.illrequest_id
           _ "&amp;author=" _ result.author
           _ "&amp;title=" _ result.title
           _ "&amp;issn=" _ result.issn
@@ -46,18 +49,33 @@
                       [% IF item.public_notes %]
                         ([% item.public_notes | $raw %])
                       [% END %]
+                      [% IF item.itemnumber == whole.current_item %]
+                        <span class="badge text-bg-warning">Current requested item</span>
+                      [% END %]
+                      [% IF whole.previous_requested_items.grep('^' _ item.itemnumber _ '$').size %]
+                        <span class="badge text-bg-danger">Previously requested item</span>
+                      [% END %]
                     </td>
-                    <td><a class="btn btn-sm btn-default" href="[% target _ "&amp;remote_item_id=" _ item.itemnumber %]">Request this item</a></td>
+                    <td>
+                      [% IF item.itemnumber == whole.current_item || whole.previous_requested_items.grep('^' _ item.itemnumber _ '$').size%]
+                        <a class="btn btn-sm btn-default disabled" href="[% target _ "&amp;remote_item_id=" _ item.itemnumber %]">Request this item</a>
+                      [% ELSE %]
+                        <a class="btn btn-sm btn-default" href="[% target _ "&amp;remote_item_id=" _ item.itemnumber %]">Request this item</a>
+                      [% END %]
+                    </td>
                   </tr>
                   [% END %]
                 </tbody>
               </table>
               [% result.libraries_content | $raw %]
             [% ELSE %]
-              <a class="btn btn-sm btn-default" href="[% target %]">Request this item</a>
+                <a class="btn btn-sm btn-default" href="[% target %]">Request this item</a>
             [% END %]
-          </td>
+            </td>
         </tr>
-        [% END %]
-      </tbody>
-    </table>
+    [% END %]
+</tbody>
+</table>
+[% ELSE %]
+<p>We have no results</p>
+[% END %]

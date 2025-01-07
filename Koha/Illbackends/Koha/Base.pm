@@ -343,15 +343,7 @@ sub create {
 
     $remote_id //= $other->{remote_biblio_id} // '';
 
-    my $request_details = {
-      target => $other->{target},
-      bib_id => $remote_id,
-      ( $other->{remote_item_id} ? ( item_id => $other->{remote_item_id} ) : () ),
-      title  => $other->{title},
-      author => $other->{author},
-      isbn   => $other->{isbn},
-      issn   => $other->{issn},
-    };
+    my $request_details = _get_request_details($other, $remote_id);
 
     # ...Populate Illrequest
     my $request = $params->{request};
@@ -481,7 +473,8 @@ sub migrate {
       $new_request->biblio_id($biblionumber);
       $new_request->store;
 
-      my $request_details;
+      my $request_details = _get_request_details( $other, $remote_id );
+
       if ( $other->{remote_item_id} ) {
           my $current_item = $new_request->extended_attributes->find( { type => 'item_id' } );
 
@@ -516,12 +509,6 @@ sub migrate {
           $item_id_attr->delete if $item_id_attr;
       }
 
-      $request_details->{target}        = $other->{target};
-      $request_details->{bib_id}        = $remote_id;
-      $request_details->{title}         = $other->{title};
-      $request_details->{author}        = $other->{author};
-      $request_details->{isbn}          = $other->{isbn};
-      $request_details->{issn}          = $other->{issn};
       $request_details->{migrated_from} = $original_request->illrequest_id;
 
       while (my ($type, $value) = each %{$request_details}) {
@@ -1096,6 +1083,27 @@ sub _validate_borrower {
     $brw = $brws;    # found multiple results
   }
   return ($count, $brw);
+}
+
+=head3 _get_request_details
+
+Given a request, extracts the details from the request and the other patron's
+data, and returns a hashref with the details.
+
+=cut
+
+sub _get_request_details {
+  my ( $request, $remote_id ) = @_;
+
+  return {
+      target  => $request->{target},
+      bib_id  => $remote_id,
+      item_id => $request->{remote_item_id},
+      title   => $request->{title},
+      author  => $request->{author},
+      isbn    => $request->{isbn},
+      issn    => $request->{issn},
+  };
 }
 
 =head3 _add_from_breeding

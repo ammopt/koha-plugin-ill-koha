@@ -878,7 +878,7 @@ sub _search {
       # Only fetch 3 biblios, or the search will take too long and timeout
       # TODO: Make this configurable (?)
       my $search_response = $ua->request(
-          GET $target->{rest_api_endpoint} . "/biblios?q=" . encode_json($search_params).'&_per_page=3',
+          GET $target->{rest_api_endpoint} . "/api/v1/biblios?q=" . encode_json($search_params).'&_per_page=3',
           @req_headers
       );
 
@@ -892,7 +892,7 @@ sub _search {
       my $decoded_content = decode_json( $search_response->decoded_content );
 
       my $libraries = $ua->request(
-        GET $target->{rest_api_endpoint} . "/libraries?_per_page=-1",
+        GET $target->{rest_api_endpoint} . "/api/v1/libraries?_per_page=-1",
           @req_headers
       );
 
@@ -945,7 +945,7 @@ sub _add_libraries_info {
 
         my $items = $ua->request(
             GET sprintf(
-                '%s/biblios/%s/items?_per_page=-1',
+                '%s/api/v1/biblios/%s/items?_per_page=-1',
                 $base_url,
                 $record->{biblio_id},
             ),

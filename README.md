@@ -34,7 +34,7 @@ However, if a 'rest_api_endpoint' if configured, the search will be performed us
 ```
 targets:
   RemoteKoha:
-    rest_api_endpoint: https://kohaurl.com/api/v1
+    rest_api_endpoint: https://kohaopacurl.com
     user: rest_user_name
     password: rest_user_pass
 framework: ILL

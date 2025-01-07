@@ -25,6 +25,7 @@ use HTTP::Request::Common;
 use Koha::ILL::Request::Attribute;
 use Koha::Patrons;
 use LWP::UserAgent;
+use File::Basename qw( dirname );
 use MIME::Base64 qw( decode_base64 encode_base64 );
 use POSIX qw ( floor );
 use URI;
@@ -316,6 +317,7 @@ sub create {
 
       # Construct the response
       my $response = {
+        cwd            => dirname(__FILE__),
         status         => 200,
         message        => "",
         error          => 0,

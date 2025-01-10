@@ -891,20 +891,7 @@ sub _search {
       }
       my $decoded_content = decode_json( $search_response->decoded_content );
 
-      my $libraries = $ua->request(
-        GET $target->{rest_api_endpoint} . "/api/v1/libraries?_per_page=-1",
-          @req_headers
-      );
-
-      if ( $libraries->is_success ) {
-          my $rest_libraries = decode_json( $libraries->decoded_content );
-        _add_libraries_info( $decoded_content, $rest_libraries, $target->{rest_api_endpoint}, $encoded_login );
-      } else {
-          _warn_api_errors_for_warning(
-              'Unable to fetch libraries information for target ' . $target_key,
-              $libraries
-          );
-      }
+      _add_libraries_info( $decoded_content, $target->{rest_api_endpoint}, $encoded_login );
 
       foreach my $result ( @{$decoded_content} ) {
         $result->{server} = $target_key;
@@ -930,7 +917,6 @@ converting it into a human-readable format.
 
 sub _add_libraries_info {
     my $response      = shift;
-    my $libraries     = shift;
     my $base_url      = shift;
     my $encoded_login = shift;
     my $ua            = LWP::UserAgent->new;
@@ -940,7 +926,8 @@ sub _add_libraries_info {
 
         my @items_req_headers = (
             'Accept'        => 'application/json',
-            'Authorization' => "Basic $encoded_login"
+            'Authorization' => "Basic $encoded_login",
+            'x-koha-embed'  => '+strings'
         );
 
         my $items = $ua->request(
@@ -961,23 +948,19 @@ sub _add_libraries_info {
             return;
         }
 
-        my @items_array;
-        foreach my $item ( @{$items_response} ) {
-            $item->{home_library_id} =~ s/^\s+|\s+$//g;
-            my ($filtered_library) = grep { $_->{library_id} eq $item->{home_library_id}; } @{$libraries};
+        my $final_items = [
+            map {
+                $_->{strings} = $_->{_strings};
+                delete $_->{_strings};
+                $_->{libraryname} = $_->{strings}->{home_library_id}->{str} // $_->{strings}->{holding_library_id}->{str};
+                $_;
+            } @{$items_response}
+        ];
 
-            push @items_array,
-            {
-                libraryname  => $filtered_library->{name},
-                public_notes => $item->{public_notes},
-                itemnumber   => $item->{item_id}
-            };
+        my @sorted_items_response =
+            sort { $a->{libraryname} cmp $b->{libraryname} } @{$final_items};
 
-        }
-
-        @items_array = sort { $a->{libraryname} cmp $b->{libraryname} } @items_array;
-
-        $record->{api_items} = \@items_array;
+        $record->{api_items} = \@sorted_items_response;
     }
 }
 

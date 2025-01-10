@@ -44,24 +44,25 @@
             [% IF result.api_items %]
               <table class="w-100">
                   [% FOREACH item IN result.api_items %]
+                  [% SET itemnumber = item.item_id %]
                   <tr>
                     <td class="w-100">
                       <strong>[% item.libraryname | $raw %]</strong>
                       [% IF item.public_notes %]
                         ([% item.public_notes | $raw %])
                       [% END %]
-                      [% IF item.itemnumber == whole.current_item %]
+                      [% IF itemnumber == whole.current_item %]
                         <span class="badge text-bg-warning">Current requested item</span>
                       [% END %]
-                      [% IF whole.previous_requested_items.grep('^' _ item.itemnumber _ '$').size %]
+                      [% IF whole.previous_requested_items.grep('^' _ itemnumber _ '$').size %]
                         <span class="badge text-bg-danger">Previously requested item</span>
                       [% END %]
                     </td>
                     <td>
-                      [% IF item.itemnumber == whole.current_item || whole.previous_requested_items.grep('^' _ item.itemnumber _ '$').size%]
-                        <a class="btn btn-sm btn-default disabled" href="[% target _ "&amp;remote_item_id=" _ item.itemnumber %]">Request this item</a>
+                      [% IF itemnumber == whole.current_item || whole.previous_requested_items.grep('^' _ itemnumber _ '$').size%]
+                        <a class="btn btn-sm btn-default disabled" href="[% target _ "&amp;remote_item_id=" _ itemnumber %]">Request this item</a>
                       [% ELSE %]
-                        <a class="btn btn-sm btn-default" href="[% target _ "&amp;remote_item_id=" _ item.itemnumber %]">Request this item</a>
+                        <a class="btn btn-sm btn-default" href="[% target _ "&amp;remote_item_id=" _ itemnumber %]">Request this item</a>
                       [% END %]
                     </td>
                   </tr>

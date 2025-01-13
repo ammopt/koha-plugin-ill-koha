@@ -607,15 +607,23 @@ sub confirm {
         };
         my $rsp = $self->_request( { method => 'GET', url => $url, headers => $headers } );
         my $library_details = decode_json( $rsp );
-        my $library_illemail = $library_details->{illemail} || $library_details->{email};
+        my $target_library_email = $library_details->{illemail} || $library_details->{email};
 
-        #TODO: Add error handling here in case $library_illemail is falsy
+        return {
+            error   => 1,
+            status  => '',
+            message => "Required target library email not found.",
+            method  => 'confirm',
+            stage   => 'confirm',
+            next    => '',
+            value   => $value
+        } unless $target_library_email;
 
         eval {
           Koha::ILL::Request::Attribute->new({
             illrequest_id => $request->illrequest_id,
             type          => 'target_library_email',
-            value         => $library_illemail,
+            value         => $target_library_email,
           })->store;
         };
         if ($@) {
@@ -625,7 +633,7 @@ sub confirm {
         return {
             method   => 'confirm',
             stage    => 'confirm',
-            illemail => $library_illemail,
+            illemail => $target_library_email,
         };
       } elsif ( $stage eq 'confirm' ) {
           my $letter_code = 'ILL_PARTNER_REQ';      #TODO: Grab this from config.

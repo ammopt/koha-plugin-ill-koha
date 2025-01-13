@@ -32,6 +32,7 @@ use URI;
 use URI::Escape;
 use Try::Tiny;
 
+use Koha::I18N qw(__);
 use Koha::Plugin::Org::KC::ILL::Koha;
 
 # Modules imminently being deprecated
@@ -227,6 +228,46 @@ sub capabilities {
 
 sub status_graph {
   return {
+    NEW => {
+      prev_actions => [ ],
+      id             => 'NEW',
+      name           => __('New request'),
+      ui_method_name => __('New request'),
+      method         => 'create',
+      next_actions   => [ 'REQ', 'KILL' ],
+      ui_method_icon => 'fa-plus',
+    },
+    REQREV => {
+        prev_actions   => [ 'REQ' ],
+        id             => 'REQREV',
+        name           => __('Request reverted'),
+        ui_method_name => __('Revert request'),
+        method         => 'cancel',
+        next_actions   => [ 'REQ', 'KILL', 'MIG' ],
+        ui_method_icon => 'fa-times',
+    },
+    GENREQ => {
+        prev_actions   => [],
+        id             => 'GENREQ',
+        name           => __('Requested from partners'),
+        ui_method_name => __('Place request with partners'),
+        method         => 0,
+        next_actions   => [],
+        ui_method_icon => 'fa-paper-plane',
+    },
+    CHK => {
+        prev_actions   => [ 'REQ', 'COMP' ],
+        id             => 'CHK',
+        name           => __('Checked out'),
+        ui_method_name => __('Check out'),
+        needs_prefs    => [ 'CirculateILL' ],
+        needs_perms    => [ 'user_circulate_circulate_remaining_permissions' ],
+        # An array of functions that all must return true
+        needs_all      => [ sub { my $r = shift;  return $r->biblio; } ],
+        method         => 'check_out',
+        next_actions   => [ ],
+        ui_method_icon => 'fa-upload',
+    },
     MIG => {
       prev_actions   => ['NEW', 'REQREV', 'QUEUED',],
       id             => 'MIG',
@@ -235,7 +276,7 @@ sub status_graph {
       method         => 'migrate',
       next_actions   => [],
       ui_method_icon => 'fa-search',
-    },
+    }
   };
 }
 

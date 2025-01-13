@@ -579,15 +579,16 @@ sub confirm {
   }
   my $target      = $self->{targets}->{ $value->{target} };
   if ( $target->{rest_api_endpoint} ) {
-      my $letter_code = 'ILL_REQUESTs_UPDATE';    #TODO: Grab this from config.
-      if (
-          my $letter = C4::Letters::GetPreparedLetter(
-              module                 => 'ill',
-              letter_code            => $letter_code,
-              message_transport_type => 'email',
-              tables                 => { borrowers => '51' }, #TODO: Use the borrowernumber from the ILL request
-          )
-          )
+      my $letter_code = 'ILL_PARTNER_REQ';    #TODO: Grab this from config.
+      my $request = $params->{request};
+      my $letter = $request->get_notice(
+          {
+              notice_code => $letter_code,
+              transport   => 'email'
+          }
+      );
+
+      if ( $letter )
       {
           C4::Letters::EnqueueLetter(
               {
@@ -608,7 +609,6 @@ sub confirm {
           };
       }
 
-      my $request = $params->{request};
       my $current_item = $request->extended_attributes->find( { type => 'item_id' } );
       my $previous_requested_items_string;
 

@@ -166,11 +166,11 @@ sub metadata {
     my ( $self, $request ) = @_;
     my $attrs                    = $request->extended_attributes;
     my $id                       = scalar $attrs->find( { type => 'bib_id' } );
-    my $item_id                  = scalar $attrs->find( { type => 'item_id' } );
     my $title                    = scalar $attrs->find( { type => 'title' } );
     my $article_title            = scalar $attrs->find( { type => 'article_title' } );
     my $author                   = scalar $attrs->find( { type => 'author' } );
     my $target                   = scalar $attrs->find( { type => 'target' } );
+    my $target_item_id           = scalar $attrs->find( { type => 'target_item_id' } );
     my $target_library_id        = scalar $attrs->find( { type => 'target_library_id' } );
     my $target_library_email     = scalar $attrs->find( { type => 'target_library_email' } );
     my $target_library_name      = scalar $attrs->find( { type => 'target_library_name' } );
@@ -182,7 +182,6 @@ sub metadata {
 
     return {
         ID                         => $id                       ? $id->value                       : undef,
-        "Item ID"                  => $item_id                  ? $item_id->value                  : undef,
         Title                      => $title                    ? $title->value                    : undef,
         "Article Title"            => $article_title            ? $article_title->value            : undef,
         Author                     => $author                   ? $author->value                   : undef,
@@ -190,6 +189,7 @@ sub metadata {
         ISSN                       => $issn                     ? $issn->value                     : undef,
         DOI                        => $doi                      ? $doi->value                      : undef,
         Target                     => $target                   ? $target->value                   : undef,
+        "Target Item ID"           => $target_item_id           ? $target_item_id->value           : undef,
         "Target Library ID"        => $target_library_id        ? $target_library_id->value        : undef,
         "Target Library Email"     => $target_library_email     ? $target_library_email->value     : undef,
         "Target Library Name"      => $target_library_name      ? $target_library_name->value      : undef,
@@ -445,7 +445,7 @@ sub migrate {
       my $results = $self->_search($search, $other);
 
       my $previous_requested_items = $original_request->extended_attributes->find( { type => 'previous_requested_items' } );
-      my $current_item             = $original_request->extended_attributes->find( { type => 'item_id' } );
+      my $current_item             = $original_request->extended_attributes->find( { type => 'target_item_id' } );
 
       my @previous_requested_items_array = $previous_requested_items && $previous_requested_items->value ? split( /\|/, $previous_requested_items->value ) : ();
 
@@ -488,13 +488,13 @@ sub migrate {
 
       my $request_details = _get_request_details( $other, $remote_id );
 
-      if ( $other->{remote_item_id} ) {
-          $request_details->{item_id} = $other->{remote_item_id};
+      if ( $other->{target_item_id} ) {
+        $request_details->{target_item_id} = $other->{target_item_id};
 
           my $bib_id_attr = $new_request->extended_attributes->find( { type => 'bib_id' } );
           $bib_id_attr->delete if $bib_id_attr;
-          my $item_id_attr = $new_request->extended_attributes->find( { type => 'item_id' } );
-          $item_id_attr->delete if $item_id_attr;
+          my $target_item_id_attr = $new_request->extended_attributes->find( { type => 'target_item_id' } );
+          $target_item_id_attr->delete if $target_item_id_attr;
           my $target_library_id_attr = $new_request->extended_attributes->find( { type => 'target_library_id' } );
           $target_library_id_attr->delete if $target_library_id_attr;
           my $target_library_name_attr = $new_request->extended_attributes->find( { type => 'target_library_name' } );
@@ -674,7 +674,7 @@ sub confirm {
               }
           );
 
-          my $current_item = $request->extended_attributes->find( { type => 'item_id' } );
+          my $current_item = $request->extended_attributes->find( { type => 'target_item_id' } );
           my $previous_requested_items_string;
 
           my $previous_requested_items = $request->extended_attributes->find( { type => 'previous_requested_items' } );
@@ -714,8 +714,8 @@ sub confirm {
               warn "Error adding attribute: $@";
           }
 
-          my $item_id = $request->extended_attributes->find( { type => 'item_id' } );
-          $request->orderid( $item_id->value ) if $item_id;
+          my $target_item_id = $request->extended_attributes->find( { type => 'target_item_id' } );
+          $request->orderid( $target_item_id->value ) if $target_item_id;
           $request->status("REQ");
           $request->store;
 
@@ -1248,10 +1248,10 @@ sub _get_request_details {
 
   return {
       target              => $request->{target},
+      target_item_id      => $request->{target_item_id},
       target_library_id   => $request->{target_library_id},
       target_library_name => $request->{target_library_name},
       bib_id              => $remote_id,
-      item_id             => $request->{remote_item_id},
       article_title       => $request->{article_title},
       title               => $request->{title},
       author              => $request->{author},

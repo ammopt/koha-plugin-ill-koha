@@ -171,6 +171,8 @@ sub metadata {
     my $article_title            = scalar $attrs->find( { type => 'article_title' } );
     my $author                   = scalar $attrs->find( { type => 'author' } );
     my $target                   = scalar $attrs->find( { type => 'target' } );
+    my $target_library_id        = scalar $attrs->find( { type => 'target_library_id' } );
+    my $target_library_name      = scalar $attrs->find( { type => 'target_library_name' } );
     my $isbn                     = scalar $attrs->find( { type => 'isbn' } );
     my $issn                     = scalar $attrs->find( { type => 'issn' } );
     my $doi                      = scalar $attrs->find( { type => 'doi' } );
@@ -187,6 +189,8 @@ sub metadata {
         ISSN                       => $issn                     ? $issn->value                     : undef,
         DOI                        => $doi                      ? $doi->value                      : undef,
         Target                     => $target                   ? $target->value                   : undef,
+        "Target Library ID"        => $target_library_id        ? $target_library_id->value        : undef,
+        "Target Library Name"      => $target_library_name      ? $target_library_name->value      : undef,
         Year                       => $year                     ? $year->value                   : undef,
         "Previous requested items" => $previous_requested_items ? $previous_requested_items->value : undef
     };
@@ -489,6 +493,10 @@ sub migrate {
           $bib_id_attr->delete if $bib_id_attr;
           my $item_id_attr = $new_request->extended_attributes->find( { type => 'item_id' } );
           $item_id_attr->delete if $item_id_attr;
+          my $target_library_id_attr = $new_request->extended_attributes->find( { type => 'target_library_id' } );
+          $target_library_id_attr->delete if $target_library_id_attr;
+          my $target_library_name_attr = $new_request->extended_attributes->find( { type => 'target_library_name' } );
+          $target_library_name_attr->delete if $target_library_name_attr;
       }
 
       $request_details->{migrated_from} = $original_request->illrequest_id;
@@ -1188,16 +1196,18 @@ sub _get_request_details {
   my ( $request, $remote_id ) = @_;
 
   return {
-      target        => $request->{target},
-      bib_id        => $remote_id,
-      item_id       => $request->{remote_item_id},
-      article_title => $request->{article_title},
-      title         => $request->{title},
-      author        => $request->{author},
-      isbn          => $request->{isbn},
-      year          => $request->{year},
-      issn          => $request->{issn},
-      doi           => $request->{doi},
+      target              => $request->{target},
+      target_library_id   => $request->{target_library_id},
+      target_library_name => $request->{target_library_name},
+      bib_id              => $remote_id,
+      item_id             => $request->{remote_item_id},
+      article_title       => $request->{article_title},
+      title               => $request->{title},
+      author              => $request->{author},
+      isbn                => $request->{isbn},
+      year                => $request->{year},
+      issn                => $request->{issn},
+      doi                 => $request->{doi},
   };
 }
 

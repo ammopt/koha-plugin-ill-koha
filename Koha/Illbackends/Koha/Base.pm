@@ -548,10 +548,7 @@ sub migrate {
         { type => 'migrated_from' } )->value;
     my $request     = Koha::ILL::Requests->find($from_id);
 
-    # Just cancel the original request now it's been migrated away
-    $request->status("REQREV");
-    $request->orderid(undef);
-    $request->store;
+    clean_up_request($request);
 
     # Clean up the temporary bib record for the migrated request
     #if ( my $biblio = $request->biblio ) {
@@ -568,6 +565,14 @@ sub migrate {
       value   => $params,
     };
   }
+}
+
+sub clean_up_request {
+    my ($request) = @_;
+
+    $request->status("REQREV");
+    $request->orderid(undef);
+    $request->store;
 }
 
 =head3 confirm
@@ -808,17 +813,37 @@ Illrequest.  $other may be supplied using templates.
 =cut
 
 sub cancel {
+    my ( $self, $params ) = @_;
+    my $stage = $params->{other}->{stage};
 
-  # -> request an already 'confirm'ed ILL order be cancelled
-  my ($self, $params) = @_;
-  return {
-    error   => 1,
-    status  => 404,
-    message => "Not Implemented",
-    method  => 'cancel',
-    stage   => 'fake',
-    value   => {},
-  };
+    if ( !$stage || $stage eq 'init' ) {
+        return {
+            method => 'cancel',
+            stage  => 'confirm',
+            value  => $params,
+        };
+    } elsif ( $stage eq 'confirm' ) {
+        my $request = Koha::ILL::Requests->find( $params->{other}->{illrequest_id} );
+
+        clean_up_request($request);
+        return {
+            method => 'cancel',
+            stage  => 'commit',
+            next   => 'illview',
+            value  => $params,
+        };
+    } else {
+
+        # Invalid stage, return error.
+        return {
+            error   => 1,
+            status  => 'unknown_stage',
+            message => '',
+            method  => 'cancel',
+            stage   => $params->{stage},
+            value   => {},
+        };
+    }
 }
 
 =head3 status

@@ -574,6 +574,7 @@ sub confirm {
 
   # -> confirm placement of the ILL order
   my ($self, $params) = @_;
+  my $stage = $params->{other}->{stage};
 
   # Turn Illrequestattributes into a plain hashref
   my $value      = {};
@@ -583,92 +584,99 @@ sub confirm {
   }
   my $target      = $self->{targets}->{ $value->{target} };
   if ( $target->{rest_api_endpoint} ) {
-      my $letter_code = 'ILL_PARTNER_REQ';    #TODO: Grab this from config.
-      my $request = $params->{request};
-      my $letter = $request->get_notice(
-          {
-              notice_code => $letter_code,
-              transport   => 'email'
-          }
-      );
 
-      if ( $letter )
-      {
-          C4::Letters::EnqueueLetter(
+      if ( !$stage || $stage eq 'init' ) {
+          return {
+              method => 'confirm',
+              stage  => 'confirm',
+              value  => $params,
+          };
+      } elsif ( $stage eq 'confirm' ) {
+
+          my $letter_code = 'ILL_PARTNER_REQ';      #TODO: Grab this from config.
+          my $request     = $params->{request};
+          my $letter      = $request->get_notice(
               {
-                  letter                 => $letter,
-                  borrowernumber         => '51',
-                  message_transport_type => 'email',
+                  notice_code => $letter_code,
+                  transport   => 'email'
               }
           );
-      } else {
+
+          if ($letter) {
+              C4::Letters::EnqueueLetter(
+                  {
+                      letter                 => $letter,
+                      borrowernumber         => '51',
+                      message_transport_type => 'email',
+                  }
+              );
+          } else {
+              return {
+                  error   => 1,
+                  status  => '',
+                  message => "Configured letter not found: $letter_code",
+                  method  => 'confirm',
+                  stage   => 'confirm',
+                  next    => '',
+                  value   => $value
+              };
+          }
+
+          my $current_item = $request->extended_attributes->find( { type => 'item_id' } );
+          my $previous_requested_items_string;
+
+          my $previous_requested_items = $request->extended_attributes->find( { type => 'previous_requested_items' } );
+
+          if (   $previous_requested_items
+              && $previous_requested_items->value
+              && $current_item
+              && $current_item->value )
+          {
+              my @previous_requested_items_array = split( /\|/, $previous_requested_items->value );
+
+              unless ( grep { $_ eq $current_item->value } @previous_requested_items_array ) {
+                  push @previous_requested_items_array, $current_item->value;
+              }
+              my $string = join "|", @previous_requested_items_array;
+
+              $previous_requested_items_string = $string;
+          } else {
+              $previous_requested_items_string = $current_item->value;
+          }
+
+          my $previous_requested_items_attr =
+              $request->extended_attributes->find( { type => 'previous_requested_items' } );
+          $previous_requested_items_attr->delete if $previous_requested_items_attr;
+
+          eval {
+              Koha::ILL::Request::Attribute->new(
+                  {
+                      illrequest_id => $request->illrequest_id,
+                      type          => 'previous_requested_items',
+                      value         => $previous_requested_items_string,
+                  }
+                  )->store
+                  if defined $previous_requested_items_string;
+          };
+          if ($@) {
+              warn "Error adding attribute: $@";
+          }
+
+          my $item_id = $request->extended_attributes->find( { type => 'item_id' } );
+          $request->orderid( $item_id->value ) if $item_id;
+          $request->status("REQ");
+          $request->store;
+
           return {
-              error   => 1,
+              error   => 0,
               status  => '',
-              message => "Configured letter not found: $letter_code",
+              message => '',
               method  => 'confirm',
-              stage   => 'confirm',
-              next    => '',
-              value   => $value
+              stage   => 'commit',
+              next    => 'illview',
+              value   => $value,
           };
       }
-
-      my $current_item = $request->extended_attributes->find( { type => 'item_id' } );
-      my $previous_requested_items_string;
-
-      my $previous_requested_items =
-        $request->extended_attributes->find( { type => 'previous_requested_items' } );
-
-      my $new_previous_requested_items;
-      if (   $previous_requested_items
-          && $previous_requested_items->value
-          && $current_item
-          && $current_item->value )
-      {
-          my @previous_requested_items_array = split( /\|/, $previous_requested_items->value );
-
-          unless ( grep { $_ eq $current_item->value } @previous_requested_items_array ) {
-              push @previous_requested_items_array, $current_item->value;
-          }
-          my $string = join "|", @previous_requested_items_array;
-
-          $previous_requested_items_string = $string;
-      } else {
-          $previous_requested_items_string = $current_item->value;
-      }
-
-      my $previous_requested_items_attr =
-          $request->extended_attributes->find( { type => 'previous_requested_items' } );
-      $previous_requested_items_attr->delete if $previous_requested_items_attr;
-
-      eval {
-          Koha::ILL::Request::Attribute->new(
-              {
-                  illrequest_id => $request->illrequest_id,
-                  type          => 'previous_requested_items',
-                  value         => $previous_requested_items_string,
-              }
-              )->store
-              if defined $previous_requested_items_string;
-      };
-      if ($@) {
-          warn "Error adding attribute: $@";
-      }
-
-      my $item_id = $request->extended_attributes->find( { type => 'item_id' } );
-      $request->orderid( $item_id->value ) if $item_id;
-      $request->status("REQ");
-      $request->store;
-
-      return {
-          error   => 0,
-          status  => '',
-          message => '',
-          method  => 'confirm',
-          stage   => 'commit',
-          next    => 'illview',
-          value   => $value,
-      };
   }
 
   # Submit request to backend...

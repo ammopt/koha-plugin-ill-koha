@@ -172,6 +172,7 @@ sub metadata {
     my $author                   = scalar $attrs->find( { type => 'author' } );
     my $target                   = scalar $attrs->find( { type => 'target' } );
     my $target_library_id        = scalar $attrs->find( { type => 'target_library_id' } );
+    my $target_library_email     = scalar $attrs->find( { type => 'target_library_email' } );
     my $target_library_name      = scalar $attrs->find( { type => 'target_library_name' } );
     my $isbn                     = scalar $attrs->find( { type => 'isbn' } );
     my $issn                     = scalar $attrs->find( { type => 'issn' } );
@@ -190,6 +191,7 @@ sub metadata {
         DOI                        => $doi                      ? $doi->value                      : undef,
         Target                     => $target                   ? $target->value                   : undef,
         "Target Library ID"        => $target_library_id        ? $target_library_id->value        : undef,
+        "Target Library Email"     => $target_library_email     ? $target_library_email->value     : undef,
         "Target Library Name"      => $target_library_name      ? $target_library_name->value      : undef,
         Year                       => $year                     ? $year->value                   : undef,
         "Previous requested items" => $previous_requested_items ? $previous_requested_items->value : undef
@@ -497,6 +499,8 @@ sub migrate {
           $target_library_id_attr->delete if $target_library_id_attr;
           my $target_library_name_attr = $new_request->extended_attributes->find( { type => 'target_library_name' } );
           $target_library_name_attr->delete if $target_library_name_attr;
+          my $target_library_email = $new_request->extended_attributes->find( { type => 'target_library_email' } );
+          $target_library_email->delete if $target_library_email;
       }
 
       $request_details->{migrated_from} = $original_request->illrequest_id;
@@ -593,42 +597,74 @@ sub confirm {
   my $target      = $self->{targets}->{ $value->{target} };
   if ( $target->{rest_api_endpoint} ) {
 
+      my $request = $params->{request};
       if ( !$stage || $stage eq 'init' ) {
-          return {
-              method => 'confirm',
-              stage  => 'confirm',
-              value  => $params,
-          };
-      } elsif ( $stage eq 'confirm' ) {
+        my $url       = URI->new( $target->{rest_api_endpoint}.'/api/v1/libraries/'.$value->{target_library_id} );
+        my $encoded_login = encode_base64( $target->{user} . ':' . $target->{password} );
+        my $headers   = {
+            'Accept'        => 'application/json',
+            'Authorization' => "Basic $encoded_login"
+        };
+        my $rsp = $self->_request( { method => 'GET', url => $url, headers => $headers } );
+        my $library_details = decode_json( $rsp );
+        my $library_illemail = $library_details->{illemail} || $library_details->{email};
 
+        #TODO: Add error handling here in case $library_illemail is falsy
+
+        eval {
+          Koha::ILL::Request::Attribute->new({
+            illrequest_id => $request->illrequest_id,
+            type          => 'target_library_email',
+            value         => $library_illemail,
+          })->store;
+        };
+        if ($@) {
+            warn "Error adding attribute: $@";
+        }
+
+        return {
+            method   => 'confirm',
+            stage    => 'confirm',
+            illemail => $library_illemail,
+        };
+      } elsif ( $stage eq 'confirm' ) {
           my $letter_code = 'ILL_PARTNER_REQ';      #TODO: Grab this from config.
-          my $request     = $params->{request};
           my $letter      = $request->get_notice(
               {
                   notice_code => $letter_code,
                   transport   => 'email'
               }
           );
+          return {
+              error   => 1,
+              status  => '',
+              message => "Configured letter not found: $letter_code",
+              method  => 'confirm',
+              stage   => 'confirm',
+              next    => '',
+              value   => $value
+          } unless $letter;
 
-          if ($letter) {
-              C4::Letters::EnqueueLetter(
-                  {
-                      letter                 => $letter,
-                      borrowernumber         => '51',
-                      message_transport_type => 'email',
-                  }
-              );
-          } else {
-              return {
-                  error   => 1,
-                  status  => '',
-                  message => "Configured letter not found: $letter_code",
-                  method  => 'confirm',
-                  stage   => 'confirm',
-                  next    => '',
-                  value   => $value
-              };
-          }
+          my $target_library_email = $request->extended_attributes->find( { type => 'target_library_email' } );
+          return {
+              error   => 1,
+              status  => '',
+              message => "Required target library email not found.",
+              method  => 'confirm',
+              stage   => 'confirm',
+              next    => '',
+              value   => $value
+          } unless $target_library_email;
+
+          C4::Letters::EnqueueLetter(
+              {
+                  letter                 => $letter,
+                  borrowernumber         => '51', #TODO: Attach this notice to the patron?
+                  #TODO: Should the from_address be the ILL request's branchcode?
+                  to_address             => $target_library_email->value,
+                  message_transport_type => 'email',
+              }
+          );
 
           my $current_item = $request->extended_attributes->find( { type => 'item_id' } );
           my $previous_requested_items_string;
@@ -1131,6 +1167,7 @@ sub _request {
   my $url        = $param->{url};
   my $content    = $param->{content};
   my $additional = $param->{additional};
+  my $headers    = $param->{headers};
 
   my $req = HTTP::Request->new($method => $url);
 
@@ -1138,6 +1175,12 @@ sub _request {
   if ($content) {
     $req->content($content);
     $req->header('Content-Type' => 'text/xml');
+  }
+
+  if ($headers) {
+    foreach my $key ( keys %{$headers} ) {
+      $req->header($key => $headers->{$key});
+    }
   }
 
   my $ua  = LWP::UserAgent->new;

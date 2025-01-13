@@ -9,11 +9,9 @@
     </ol>
 [% END %]
 
-[% IF whole.stage == "confirm" %]
+[% IF whole.stage == "confirm" && !whole.error %]
     <h2>Confirm request</h2>
-    <p>Proceeding with this action will set this request to 'Requested'.</p>
-    <p>This means that actions have been taken to request this request from a source.</p>
-    <p>If you can confirm this has been done, please proceed.</p>
+    <p>Proceeding with this action will set this request to 'Requested' and send a request email to <strong>[% whole.illemail %]</strong></p>
     <p>
     [% base_url = "/cgi-bin/koha/ill/ill-requests.pl" %]
     [% proceed_url = base_url _ "?method=confirm&stage=confirm" _ "&illrequest_id=" _ request.illrequest_id %]

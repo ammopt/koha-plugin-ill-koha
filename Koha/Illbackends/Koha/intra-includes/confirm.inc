@@ -3,7 +3,9 @@
     <!-- Dispatch on Status -->
     <p>We encountered an error:</p>
     <ol>
-        <li>[% whole.status %]</li>
+        [% IF (whole.status) %]
+            <li>[% whole.status %]</li>
+        [% END %]
         <li>[% whole.message %]</li>
     </ol>
 [% END %]

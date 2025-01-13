@@ -38,6 +38,7 @@ use Koha::Plugin::Org::KC::ILL::Koha;
 use C4::Biblio qw( AddBiblio );
 use C4::Breeding qw( Z3950Search );
 use C4::ImportBatch qw( GetImportRecordMarc );
+use C4::Letters;
 
 =head1 NAME
 
@@ -596,7 +597,55 @@ sub confirm {
   foreach my $attr (@{$attributes->as_list}) {
     $value->{$attr->type} = $attr->value;
   }
-  my $target = $self->{targets}->{$value->{target}};
+  my $target      = $self->{targets}->{ $value->{target} };
+  if ( $target->{rest_api_endpoint} ) {
+      my $letter_code = 'ILL_REQUESTs_UPDATE';    #TODO: Grab this from config.
+      if (
+          my $letter = C4::Letters::GetPreparedLetter(
+              module                 => 'ill',
+              letter_code            => $letter_code,
+              message_transport_type => 'email',
+              tables                 => { borrowers => '51' }, #TODO: Use the borrowernumber from the ILL request
+          )
+          )
+      {
+          C4::Letters::EnqueueLetter(
+              {
+                  letter                 => $letter,
+                  borrowernumber         => '51',
+                  message_transport_type => 'email',
+              }
+          );
+      } else {
+          return {
+              error   => 1,
+              status  => '',
+              message => "Configured letter not found: $letter_code",
+              method  => 'confirm',
+              stage   => 'confirm',
+              next    => '',
+              value   => $value
+          };
+      }
+
+      #TODO: Move the code that adds item_id to 'previous requested items' here.
+      # An item_id should only be added to 'previous requested items' if a request for that item was confirmed
+      my $request = $params->{request};
+      my $item_id = $request->extended_attributes->find( { type => 'item_id' } );
+      $request->orderid( $item_id->value ) if $item_id;
+      $request->status("REQ");
+      $request->store;
+
+      return {
+          error   => 0,
+          status  => '',
+          message => '',
+          method  => 'confirm',
+          stage   => 'commit',
+          next    => 'illview',
+          value   => $value,
+      };
+  }
 
   # Submit request to backend...
 

@@ -52,7 +52,7 @@
                         ([% item.public_notes | $raw %])
                       [% END %]
                       [% IF itemnumber == whole.current_item %]
-                        <span class="badge text-bg-warning">Current requested item</span>
+                        <span class="badge text-bg-warning">Current item to be requested</span>
                       [% END %]
                       [% IF whole.previous_requested_items.grep('^' _ itemnumber _ '$').size %]
                         <span class="badge text-bg-danger">Previously requested item</span>

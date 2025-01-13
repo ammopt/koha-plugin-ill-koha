@@ -479,33 +479,8 @@ sub migrate {
       my $request_details = _get_request_details( $other, $remote_id );
 
       if ( $other->{remote_item_id} ) {
-          my $current_item = $new_request->extended_attributes->find( { type => 'item_id' } );
-
-          my $previous_requested_items =
-              $params->{request}->extended_attributes->find( { type => 'previous_requested_items' } );
-
-          my $new_previous_requested_items;
-          if (   $previous_requested_items
-              && $previous_requested_items->value
-              && $current_item
-              && $current_item->value )
-          {
-              my @previous_requested_items_array = split( /\|/, $previous_requested_items->value );
-
-              unless ( grep { $_ eq $current_item->value } @previous_requested_items_array ) {
-                  push @previous_requested_items_array, $current_item->value;
-              }
-              my $string = join "|", @previous_requested_items_array;
-
-              $request_details->{previous_requested_items} = $string;
-          } else {
-              $request_details->{previous_requested_items} = $current_item->value;
-          }
-
           $request_details->{item_id} = $other->{remote_item_id};
 
-          my $previous_requested_items_attr = $new_request->extended_attributes->find( { type => 'previous_requested_items' } );
-          $previous_requested_items_attr->delete if $previous_requested_items_attr;
           my $bib_id_attr = $new_request->extended_attributes->find( { type => 'bib_id' } );
           $bib_id_attr->delete if $bib_id_attr;
           my $item_id_attr = $new_request->extended_attributes->find( { type => 'item_id' } );
@@ -633,9 +608,49 @@ sub confirm {
           };
       }
 
-      #TODO: Move the code that adds item_id to 'previous requested items' here.
-      # An item_id should only be added to 'previous requested items' if a request for that item was confirmed
       my $request = $params->{request};
+      my $current_item = $request->extended_attributes->find( { type => 'item_id' } );
+      my $previous_requested_items_string;
+
+      my $previous_requested_items =
+        $request->extended_attributes->find( { type => 'previous_requested_items' } );
+
+      my $new_previous_requested_items;
+      if (   $previous_requested_items
+          && $previous_requested_items->value
+          && $current_item
+          && $current_item->value )
+      {
+          my @previous_requested_items_array = split( /\|/, $previous_requested_items->value );
+
+          unless ( grep { $_ eq $current_item->value } @previous_requested_items_array ) {
+              push @previous_requested_items_array, $current_item->value;
+          }
+          my $string = join "|", @previous_requested_items_array;
+
+          $previous_requested_items_string = $string;
+      } else {
+          $previous_requested_items_string = $current_item->value;
+      }
+
+      my $previous_requested_items_attr =
+          $request->extended_attributes->find( { type => 'previous_requested_items' } );
+      $previous_requested_items_attr->delete if $previous_requested_items_attr;
+
+      eval {
+          Koha::ILL::Request::Attribute->new(
+              {
+                  illrequest_id => $request->illrequest_id,
+                  type          => 'previous_requested_items',
+                  value         => $previous_requested_items_string,
+              }
+              )->store
+              if defined $previous_requested_items_string;
+      };
+      if ($@) {
+          warn "Error adding attribute: $@";
+      }
+
       my $item_id = $request->extended_attributes->find( { type => 'item_id' } );
       $request->orderid( $item_id->value ) if $item_id;
       $request->status("REQ");

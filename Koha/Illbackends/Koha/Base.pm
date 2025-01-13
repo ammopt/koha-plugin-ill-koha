@@ -168,6 +168,7 @@ sub metadata {
     my $id                       = scalar $attrs->find( { type => 'bib_id' } );
     my $item_id                  = scalar $attrs->find( { type => 'item_id' } );
     my $title                    = scalar $attrs->find( { type => 'title' } );
+    my $article_title            = scalar $attrs->find( { type => 'article_title' } );
     my $author                   = scalar $attrs->find( { type => 'author' } );
     my $target                   = scalar $attrs->find( { type => 'target' } );
     my $isbn                     = scalar $attrs->find( { type => 'isbn' } );
@@ -180,6 +181,7 @@ sub metadata {
         ID                         => $id                       ? $id->value                       : undef,
         "Item ID"                  => $item_id                  ? $item_id->value                  : undef,
         Title                      => $title                    ? $title->value                    : undef,
+        "Article Title"            => $article_title            ? $article_title->value            : undef,
         Author                     => $author                   ? $author->value                   : undef,
         ISBN                       => $isbn                     ? $isbn->value                     : undef,
         ISSN                       => $issn                     ? $issn->value                     : undef,
@@ -991,6 +993,7 @@ sub _search {
         $result->{remote_biblio_id} = $result->{biblio_id};
         $result->{doi} = $other->{doi};
         $result->{year} = $other->{year};
+        $result->{article_title} = $other->{article_title};
         push @{ $response->{results} }, $result;
       }
   }
@@ -1177,15 +1180,16 @@ sub _get_request_details {
   my ( $request, $remote_id ) = @_;
 
   return {
-      target  => $request->{target},
-      bib_id  => $remote_id,
-      item_id => $request->{remote_item_id},
-      title   => $request->{title},
-      author  => $request->{author},
-      isbn    => $request->{isbn},
-      year    => $request->{year},
-      issn    => $request->{issn},
-      doi     => $request->{doi},
+      target        => $request->{target},
+      bib_id        => $remote_id,
+      item_id       => $request->{remote_item_id},
+      article_title => $request->{article_title},
+      title         => $request->{title},
+      author        => $request->{author},
+      isbn          => $request->{isbn},
+      year          => $request->{year},
+      issn          => $request->{issn},
+      doi           => $request->{doi},
   };
 }
 

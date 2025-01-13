@@ -173,6 +173,7 @@ sub metadata {
     my $isbn                     = scalar $attrs->find( { type => 'isbn' } );
     my $issn                     = scalar $attrs->find( { type => 'issn' } );
     my $doi                      = scalar $attrs->find( { type => 'doi' } );
+    my $year                     = scalar $attrs->find( { type => 'year' } );
     my $previous_requested_items = scalar $attrs->find( { type => 'previous_requested_items' } );
 
     return {
@@ -184,6 +185,7 @@ sub metadata {
         ISSN                       => $issn                     ? $issn->value                     : undef,
         DOI                        => $doi                      ? $doi->value                      : undef,
         Target                     => $target                   ? $target->value                   : undef,
+        Year                       => $year                     ? $year->value                   : undef,
         "Previous requested items" => $previous_requested_items ? $previous_requested_items->value : undef
     };
 }
@@ -988,6 +990,7 @@ sub _search {
             $target->{rest_api_endpoint} . "/cgi-bin/koha/opac-detail.pl?biblionumber=" . $result->{biblio_id};
         $result->{remote_biblio_id} = $result->{biblio_id};
         $result->{doi} = $other->{doi};
+        $result->{year} = $other->{year};
         push @{ $response->{results} }, $result;
       }
   }
@@ -1180,6 +1183,7 @@ sub _get_request_details {
       title   => $request->{title},
       author  => $request->{author},
       isbn    => $request->{isbn},
+      year    => $request->{year},
       issn    => $request->{issn},
       doi     => $request->{doi},
   };

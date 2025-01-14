@@ -705,10 +705,26 @@ sub confirm {
               value   => $value
           } unless $target_library_email;
 
+          my $from_address = Koha::Libraries->find( $request->branchcode )->branchillemail
+              || Koha::Libraries->find( $request->branchcode )->branchemail;
+
+          return {
+              error   => 1,
+              status  => '',
+              message => "Required destination library ("
+                  . Koha::Libraries->find( $request->branchcode )->branchname
+                  . ") ILL email or library email not found.",
+              method => 'confirm',
+              stage  => 'confirm',
+              next   => '',
+              value  => $value
+          } unless $from_address;
+
           my $enqueue_letter = C4::Letters::EnqueueLetter(
               {
                   letter                 => $letter,
-                  #TODO: Should the from_address be the ILL request's branchcode?
+                  from_address           => $from_address,
+                  reply_address          => $from_address,
                   to_address             => $target_library_email->value,
                   message_transport_type => 'email',
               }

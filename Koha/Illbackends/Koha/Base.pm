@@ -708,7 +708,6 @@ sub confirm {
           my $enqueue_letter = C4::Letters::EnqueueLetter(
               {
                   letter                 => $letter,
-                  borrowernumber         => '51', #TODO: Attach this notice to the patron?
                   #TODO: Should the from_address be the ILL request's branchcode?
                   to_address             => $target_library_email->value,
                   message_transport_type => 'email',

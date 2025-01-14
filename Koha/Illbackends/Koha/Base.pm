@@ -705,13 +705,31 @@ sub confirm {
               value   => $value
           } unless $target_library_email;
 
-          C4::Letters::EnqueueLetter(
+          my $enqueue_letter = C4::Letters::EnqueueLetter(
               {
                   letter                 => $letter,
                   borrowernumber         => '51', #TODO: Attach this notice to the patron?
                   #TODO: Should the from_address be the ILL request's branchcode?
                   to_address             => $target_library_email->value,
                   message_transport_type => 'email',
+              }
+          );
+
+          return {
+              error   => 1,
+              status  => '',
+              message => "Failed to send email: $enqueue_letter",
+              method  => 'confirm',
+              stage   => 'confirm',
+              next    => '',
+              value   => $value
+          } unless $enqueue_letter;
+
+          my $logger = Koha::ILL::Request::Logger->new;
+          $logger->log_patron_notice(
+              {
+                  request     => $request,
+                  notice_code => $letter_code
               }
           );
 

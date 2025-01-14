@@ -43,6 +43,10 @@ framework: ILL
 Requires RemoteKoha to have `RESTBasicAuth` enabled.
 The YAML configuration may have both RESTAPI or ILSDI (default) interface servers.
 
+### IllLog syspref
+
+The plugin makes use of the IllLog syspref to log various actions, including notices sent.
+
 ### Post 18.11
 
 The plugin configuration is an HTML text area in which a _YAML_ structure is pasted. The available options

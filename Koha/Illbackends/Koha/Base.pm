@@ -662,11 +662,12 @@ sub confirm {
         if ($@) {
             warn "Error adding attribute: $@";
         }
+        $value->{target_library_email} = $target_library_email;
 
         return {
             method   => 'confirm',
             stage    => 'confirm',
-            illemail => $target_library_email,
+            value    => $value
         };
       } elsif ( $stage eq 'confirm' ) {
           my $letter_code = 'ILL_PARTNER_REQ';      #TODO: Grab this from config.

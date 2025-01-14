@@ -1,14 +1,3 @@
-[% IF whole.error %]
-    <!-- Dispatch on Status -->
-    <p>We encountered an error:</p>
-    <ol>
-        [% IF (whole.status) %]
-            <li>[% whole.status %]</li>
-        [% END %]
-        <li>[% whole.message %]</li>
-    </ol>
-[% END %]
-
 [% IF whole.stage == "confirm" && !whole.error %]
     <h2>Confirm request</h2>
     <p>Proceeding with this action will set this request to 'Requested' and send a request email to <strong>[% whole.illemail %]</strong></p>

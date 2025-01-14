@@ -649,16 +649,8 @@ sub confirm {
         my $rsp = $self->_request( { method => 'GET', url => $url, headers => $headers } );
         my $library_details = decode_json( $rsp );
         my $target_library_email = $library_details->{illemail} || $library_details->{email};
-
-        return {
-            error   => 1,
-            status  => '',
-            message => "Required target library email not found.",
-            method  => 'confirm',
-            stage   => 'confirm',
-            next    => '',
-            value   => $value
-        } unless $target_library_email;
+        return _return_template_error( 'Required target library email not found.', $value )
+            unless $target_library_email;
 
         eval {
           Koha::ILL::Request::Attribute->new({
@@ -684,41 +676,18 @@ sub confirm {
                   transport   => 'email'
               }
           );
-          return {
-              error   => 1,
-              status  => '',
-              message => "Configured letter not found: $letter_code",
-              method  => 'confirm',
-              stage   => 'confirm',
-              next    => '',
-              value   => $value
-          } unless $letter;
+          return _return_template_error( "Configured letter code not found: $letter_code", $value ) unless $letter;
 
           my $target_library_email = $request->extended_attributes->find( { type => 'target_library_email' } );
-          return {
-              error   => 1,
-              status  => '',
-              message => "Required target library email not found.",
-              method  => 'confirm',
-              stage   => 'confirm',
-              next    => '',
-              value   => $value
-          } unless $target_library_email;
+          return _return_template_error( 'Required target library email not found.', $value )
+              unless $target_library_email;
 
           my $from_address = Koha::Libraries->find( $request->branchcode )->branchillemail
               || Koha::Libraries->find( $request->branchcode )->branchemail;
-
-          return {
-              error   => 1,
-              status  => '',
-              message => "Required destination library ("
+          return _return_template_error( "Required destination library ("
                   . Koha::Libraries->find( $request->branchcode )->branchname
-                  . ") ILL email or library email not found.",
-              method => 'confirm',
-              stage  => 'confirm',
-              next   => '',
-              value  => $value
-          } unless $from_address;
+                  . ") ILL email or library email not found.", $value )
+              unless $from_address;
 
           my $enqueue_letter = C4::Letters::EnqueueLetter(
               {
@@ -729,16 +698,8 @@ sub confirm {
                   message_transport_type => 'email',
               }
           );
-
-          return {
-              error   => 1,
-              status  => '',
-              message => "Failed to send email: $enqueue_letter",
-              method  => 'confirm',
-              stage   => 'confirm',
-              next    => '',
-              value   => $value
-          } unless $enqueue_letter;
+          return _return_template_error( "Failed to send email: $enqueue_letter", $value )
+                unless $enqueue_letter;
 
           my $logger = Koha::ILL::Request::Logger->new;
           $logger->log_patron_notice(
@@ -1308,6 +1269,20 @@ sub _validate_borrower {
     $brw = $brws;    # found multiple results
   }
   return ($count, $brw);
+}
+
+sub _return_template_error {
+  my ( $message, $value ) = @_;
+
+  return {
+      error   => 1,
+      status  => '',
+      message => $message,
+      method  => 'confirm',
+      stage   => 'confirm',
+      next    => '',
+      value   => $value
+  }
 }
 
 =head3 _get_request_details

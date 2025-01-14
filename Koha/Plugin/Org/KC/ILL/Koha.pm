@@ -22,6 +22,8 @@ use base qw(Koha::Plugins::Base);
 use Mojo::JSON qw(decode_json);
 use YAML;
 
+use C4::Context;
+
 our $VERSION = "{VERSION}";
 
 our $metadata = {
@@ -72,6 +74,17 @@ sub configure {
         );
         $self->output_html( $template->output() );
     }
+}
+
+sub opac_js {
+    my ($self) = @_;
+
+    my $script = '<script>';
+    $script .= $self->mbf_read('js/ill-autobackend.js')
+        if C4::Context->preference('AutoILLBackendPriority');
+    $script .= '</script>';
+
+    return $script;
 }
 
 sub configuration {

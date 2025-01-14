@@ -53,7 +53,7 @@
 [% ELSIF whole.stage == "search_results" %]
     <h2>Select a request</h2>
     [% IF whole.value.results %]
-        <table class="table table-bordered table-striped">
+        <table class="table table-bordered table-striped" id="koha-ill-plugin-search-results-table">
             <thead>
                 <tr>
                     <th id="id">ID</th>

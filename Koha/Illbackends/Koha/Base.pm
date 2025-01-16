@@ -234,7 +234,7 @@ sub status_graph {
       name           => __('New request'),
       ui_method_name => __('New request'),
       method         => 'create',
-      next_actions   => [ 'REQ', 'KILL' ],
+      next_actions   => [ 'REQ', 'KILL', 'MIG' ],
       ui_method_icon => 'fa-plus',
     },
     REQREV => {

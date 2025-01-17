@@ -217,6 +217,8 @@ sub capabilities {
 
     provides_backend_availability_check => sub { return 1; },
 
+    opac_unauthenticated_ill_requests => sub { return 1; },
+
     migrate => sub { $self->migrate(@_); }
   };
   return $capabilities->{$name};
@@ -276,6 +278,15 @@ sub status_graph {
       method         => 'migrate',
       next_actions   => [],
       ui_method_icon => 'fa-search',
+    },
+    UNAUTH => {
+        prev_actions   => [],
+        id             => 'UNAUTH',
+        name           => 'Unauthenticated',
+        ui_method_name => 0,
+        method         => 0,
+        next_actions   => [ 'REQ', 'MIG', 'KILL' ],
+        ui_method_icon => 0,
     }
   };
 }
@@ -302,6 +313,10 @@ sub create {
   my $other = $params->{other};
 
   my $stage = $other->{stage};
+
+  my $unauthenticated_request =
+      C4::Context->preference("ILLOpacUnauthenticatedRequest") && !$other->{'cardnumber'} && $other->{opac};
+
   if (!$stage || $stage eq 'init') {
 
     # We simply need our template .INC to produce a search form.
@@ -317,7 +332,6 @@ sub create {
   elsif ($stage eq 'search_form' || $stage eq 'form') {
 
     # Received search query in 'other'; perform search...
-    my ($brw_count, $brw) = _validate_borrower($other->{'cardnumber'}, $stage);
     my $result = {
       status  => "",
       message => "",
@@ -326,67 +340,74 @@ sub create {
       method  => "create",
       stage   => "init",
     };
-    if (_fail($other->{'branchcode'})) {
-      $result->{status} = "missing_branch";
-      $result->{value}  = $params;
-      return $result;
-    }
-    elsif (!Koha::Libraries->find($other->{'branchcode'})) {
-      $result->{status} = "invalid_branch";
-      $result->{value}  = $params;
-      return $result;
-    }
-    elsif ($brw_count == 0) {
-      $result->{status} = "invalid_borrower";
-      $result->{value}  = $params;
-      return $result;
-    }
-    elsif ($brw_count > 1) {
+    my $failed = 0;
+    my ( $brw_count, $brw );
+    my $unauthenticated_request =
+        C4::Context->preference("ILLOpacUnauthenticatedRequest") && !$other->{'cardnumber'};
+    if ($unauthenticated_request) {
+        ( $failed, $result ) = _validate_form_params( $other, $result, $params );
+        if ( !Koha::ILL::Request::unauth_request_data_check($other) ) {
+            $result->{status} = "missing_unauth_data";
+            $result->{value}  = $params;
+            $failed           = 1;
+        }
+    } else {
+        ( $failed, $result ) = _validate_form_params( $other, $result, $params );
 
-      # We must select a specific borrower out of our options.
-      $params->{brw}   = $brw;
-      $result->{value} = $params;
-      $result->{stage} = "borrowers";
-      $result->{error} = 0;
-      return $result;
-    }
-    else {
-      # Perform the search
-      my $search = {
-        biblionumber => 0,    # required by C4::Breeding::Z3950Search
-        page => $other->{page} ? $other->{page} : 1,
-        id => [map { $self->{targets}->{$_}->{ZID} } keys %{$self->{targets}}],
-        isbn          => $other->{isbn},
-        issn          => $other->{issn},
-        title         => $other->{title},
-        author        => $other->{author},
-        dewey         => $other->{dewey},
-        subject       => $other->{subject},
-        lccall        => $other->{lccall},
-        controlnumber => $other->{controlnumber},
-        stdid         => $other->{stdid},
-        srchany       => $other->{srchany},
-      };
-      my $results = $self->_search($search, $other);
+        ( $brw_count, $brw ) =
+            _validate_borrower( $other->{'cardnumber'} );
 
-      # Construct the response
-      my $response = {
-        cwd            => dirname(__FILE__),
-        status         => 200,
-        message        => "",
-        error          => 0,
-        value          => $results,
-        method         => 'create',
-        stage          => 'search_results',
-        borrowernumber => $brw->borrowernumber,
-        cardnumber     => $other->{cardnumber},
-        branchcode     => $other->{branchcode},
-        backend        => $other->{backend},
-        query          => $search,
-        params         => $params
-      };
-      return $response;
+        if ( $brw_count == 0 ) {
+            $result->{status} = "invalid_borrower";
+            $result->{value}  = $params;
+            $failed           = 1;
+        } elsif ( $brw_count > 1 ) {
+
+            # We must select a specific borrower out of our options.
+            $params->{brw}   = $brw;
+            $result->{value} = $params;
+            $result->{stage} = "borrowers";
+            $result->{error} = 0;
+            $failed          = 1;
+        }
     }
+
+    return $result if $failed;
+    # Perform the search
+    my $search = {
+      biblionumber => 0,    # required by C4::Breeding::Z3950Search
+      page => $other->{page} ? $other->{page} : 1,
+      id => [map { $self->{targets}->{$_}->{ZID} } keys %{$self->{targets}}],
+      isbn          => $other->{isbn},
+      issn          => $other->{issn},
+      title         => $other->{title},
+      author        => $other->{author},
+      dewey         => $other->{dewey},
+      subject       => $other->{subject},
+      lccall        => $other->{lccall},
+      controlnumber => $other->{controlnumber},
+      stdid         => $other->{stdid},
+      srchany       => $other->{srchany},
+    };
+    my $results = $self->_search($search, $other);
+
+    # Construct the response
+    my $response = {
+      cwd            => dirname(__FILE__),
+      status         => 200,
+      message        => "",
+      error          => 0,
+      value          => $results,
+      method         => 'create',
+      stage          => 'search_results',
+      borrowernumber => $brw ? $brw->borrowernumber : '',
+      cardnumber     => $other->{cardnumber},
+      branchcode     => $other->{branchcode},
+      backend        => $other->{backend},
+      query          => $search,
+      params         => $params
+    };
+    return $response;
 
   }
   elsif ($stage eq 'search_results') {
@@ -418,6 +439,7 @@ sub create {
         value         => $value,
       })->store if defined $value;
     }
+    $request->append_unauthenticated_notes( $other ) if $unauthenticated_request;
 
     # -> create response.
     return {
@@ -1090,6 +1112,10 @@ sub _search {
         $result->{doi} = $other->{doi};
         $result->{year} = $other->{year};
         $result->{article_title} = $other->{article_title};
+        $result->{unauthenticated_first_name} = $other->{unauthenticated_first_name};
+        $result->{unauthenticated_last_name} = $other->{unauthenticated_last_name};
+        $result->{unauthenticated_email} = $other->{unauthenticated_email};
+
         push @{ $response->{results} }, $result;
       }
   }
@@ -1348,6 +1374,35 @@ sub _add_from_breeding {
 
   # Return the new records biblionumber and the remote records biblionumber
   return ($biblionumber, $remote_id);
+}
+
+=head3 _validate_form_params
+
+    _validate_form_params( $other, $result, $params );
+
+Validate form parameters and return the validation result
+
+=cut
+
+sub _validate_form_params {
+    my ( $other, $result, $params ) = @_;
+
+    my $failed = 0;
+    if ( !$other->{'type'} ) {
+        $result->{status} = "missing_type";
+        $result->{value}  = $params;
+        $failed           = 1;
+    } elsif ( !$other->{'branchcode'} ) {
+        $result->{status} = "missing_branch";
+        $result->{value}  = $params;
+        $failed           = 1;
+    } elsif ( !Koha::Libraries->find( $other->{'branchcode'} ) ) {
+        $result->{status} = "invalid_branch";
+        $result->{value}  = $params;
+        $failed           = 1;
+    }
+
+    return ( $failed, $result );
 }
 
 =head3 _set_suppression

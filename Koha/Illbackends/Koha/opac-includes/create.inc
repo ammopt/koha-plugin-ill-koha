@@ -83,7 +83,7 @@
                         _ "&amp;doi=" _ result.doi
                         _ "&amp;unauthenticated_first_name=" _ result.unauthenticated_first_name
                         _ "&amp;unauthenticated_last_name=" _ result.unauthenticated_last_name
-                        _ "&amp;unauthenticated_email=" _ result.unauthenticated_email _ "&amp;doi=" _ result.doi
+                        _ "&amp;unauthenticated_email=" _ result.unauthenticated_email
                         _ "&amp;year=" _ result.year
                         _ "&amp;article_title=" _ result.article_title
                         _ "&amp;remote_biblio_id=" _ result.remote_biblio_id

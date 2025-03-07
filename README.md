@@ -24,6 +24,29 @@ available version and you are on Koha `v24.11.00`, then you pick the latest `v24
 
 ## Configuration
 
+### REST API
+
+The default behavior is to utilize the configured z39.50 server as well as its configured ILSDI endpoint.
+However, if a 'rest_api_endpoint' if configured, the search will be performed using the REST API instead.
+
+### REST API example
+
+```
+targets:
+  RemoteKoha:
+    rest_api_endpoint: https://kohaopacurl.com
+    user: rest_user_name
+    password: rest_user_pass
+framework: ILL
+```
+
+Requires RemoteKoha to have `RESTBasicAuth` enabled.
+The YAML configuration may have both RESTAPI or ILSDI (default) interface servers.
+
+### IllLog syspref
+
+The plugin makes use of the IllLog syspref to log various actions, including notices sent.
+
 ### Post 18.11
 
 The plugin configuration is an HTML text area in which a _YAML_ structure is pasted. The available options

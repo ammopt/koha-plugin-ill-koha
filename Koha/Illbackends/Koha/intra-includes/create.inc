@@ -1,3 +1,4 @@
+[% cwd = whole.cwd %]
 <!-- Error Handling -->
 [% IF whole.error %]
     <!-- Dispatch on Status -->
@@ -84,40 +85,7 @@
     [% END %]
 
     <h2>Select an item to request</h2>
-    <table>
-      <thead>
-        <tr>
-          <th id="partner">Partner</th>
-          <th id="title">Title</th>
-          <th id="author">Author</th>
-          <th id="isbn">ISBN</th>
-          <th id="select">Select?</th>
-        </tr>
-      </thead>
-      <tbody>
-        [% FOREACH result IN whole.value.results %]
-        <tr>
-          <td>[% result.server %]</td>
-          <td>[% result.title %]</td>
-          <td>[% result.author %]</td>
-          <td>[% result.isbn %]</td>
-          [% target = "/cgi-bin/koha/ill/ill-requests.pl"
-          _ "?method=" _ whole.method
-          _ "&amp;target=" _ result.server
-          _ "&amp;stage=" _ whole.stage
-          _ "&amp;backend=" _ whole.backend
-          _ "&amp;borrowernumber=" _ whole.borrowernumber
-          _ "&amp;branchcode=" _ whole.branchcode
-          _ "&amp;author=" _ result.author
-          _ "&amp;title=" _ result.title
-          _ "&amp;breedingid=" _ result.breedingid %]
-          <td>
-            <a class="btn btn-sm btn-default" href="[% target %]">Request this item</a>
-          </td>
-        </tr>
-        [% END %]
-      </tbody>
-    </table>
+    [% INCLUDE "${cwd}/intra-includes/results_table.inc" %]
   [% ELSE %]
     <p>We have no results</p>
   [% END %]

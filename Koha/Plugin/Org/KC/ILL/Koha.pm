@@ -22,6 +22,8 @@ use base qw(Koha::Plugins::Base);
 use Mojo::JSON qw(decode_json);
 use YAML;
 
+use C4::Context;
+
 our $VERSION = "{VERSION}";
 
 our $metadata = {
@@ -74,6 +76,17 @@ sub configure {
     }
 }
 
+sub opac_js {
+    my ($self) = @_;
+
+    my $script = '<script>';
+    $script .= $self->mbf_read('js/ill-autobackend.js')
+        if C4::Context->preference('AutoILLBackendPriority');
+    $script .= '</script>';
+
+    return $script;
+}
+
 sub configuration {
     my ($self) = @_;
 
@@ -82,6 +95,21 @@ sub configuration {
     die($@) if $@;
 
     return $configuration;
+}
+
+sub api_namespace {
+    my ($self) = @_;
+
+    return 'Koha';
+}
+
+sub api_routes {
+    my ( $self, $args ) = @_;
+
+    my $spec_str = $self->mbf_read('openapi.json');
+    my $spec     = decode_json($spec_str);
+
+    return $spec;
 }
 
 1;

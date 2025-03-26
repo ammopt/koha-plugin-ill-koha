@@ -1388,11 +1388,7 @@ sub _validate_form_params {
     my ( $other, $result, $params ) = @_;
 
     my $failed = 0;
-    if ( !$other->{'type'} ) {
-        $result->{status} = "missing_type";
-        $result->{value}  = $params;
-        $failed           = 1;
-    } elsif ( !$other->{'branchcode'} ) {
+    if ( !$other->{'branchcode'} ) {
         $result->{status} = "missing_branch";
         $result->{value}  = $params;
         $failed           = 1;

@@ -1,4 +1,53 @@
 [% IF whole.value.results %]
+<fieldset class="rows">
+  <button type="button" class="btn btn-link" onclick="history.back()">
+      <i class="fa fa-arrow-left"></i> Go back
+  </button>
+[% IF whole.params.other %]
+<button type="button" class="btn btn-link" onclick="toggleRequestDetails()">
+  <i class="fa fa-caret-down" id="toggle-arrow"></i> <span id="toggle-button">Show request details</span>
+</button>
+<div id="request-details" style="display: none;">
+  <ul class="list-unstyled">
+    <table class="table table-sm table-striped">
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Value</th>
+        </tr>
+      </thead>
+      <tbody>
+        [% FOREACH key IN whole.params.other.keys.sort %]
+        [% IF key != 'csrf_token' && key != 'op' && key != 'stage' %]
+        <tr>
+          <td>[% key | replace("_", " ") | ucfirst | html %]</td>
+          <td>[% whole.params.other.$key | html %]</td>
+        </tr>
+        [% END %]
+        [% END %]
+      </tbody>
+    </table>
+  </ul>
+</div>
+<script>
+  function toggleRequestDetails() {
+    var details = document.getElementById('request-details');
+    var toggleButton = document.getElementById('toggle-button');
+    var toggleArrow = document.getElementById('toggle-arrow');
+    if (details.style.display === 'none') {
+      console.log('hello');
+      details.style.display = 'block';
+      toggleButton.textContent = 'Hide request details';
+      toggleArrow.className = 'fa fa-caret-up';
+    } else {
+      details.style.display = 'none';
+      toggleButton.textContent = 'Show request details';
+      toggleArrow.className = 'fa fa-caret-down';
+    }
+  }
+</script>
+[% END %]
+</fieldset>
 <table>
       <thead>
         <tr>

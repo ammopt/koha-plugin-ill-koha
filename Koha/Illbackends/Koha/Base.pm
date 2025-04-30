@@ -342,11 +342,11 @@ sub create {
     };
     my $failed = 0;
     my ( $brw_count, $brw );
-    my $unauthenticated_request =
-        C4::Context->preference("ILLOpacUnauthenticatedRequest") && !$other->{'cardnumber'};
     if ($unauthenticated_request) {
         ( $failed, $result ) = _validate_form_params( $other, $result, $params );
-        if ( !Koha::ILL::Request::unauth_request_data_check($other) ) {
+        return $result if $failed;
+        my $unauth_request_error = Koha::ILL::Request::unauth_request_data_error($other);
+        if ( $unauth_request_error ) {
             $result->{status} = "missing_unauth_data";
             $result->{value}  = $params;
             $failed           = 1;
@@ -424,7 +424,7 @@ sub create {
     my $request = $params->{request};
     $request->borrowernumber($other->{borrowernumber});
     $request->branchcode($other->{branchcode});
-    $request->status('NEW');
+    $request->status( $unauthenticated_request ? 'UNAUTH' : 'NEW');
     $request->backend($other->{backend});
     $request->placed(DateTime->now);
     $request->updated(DateTime->now);
@@ -439,7 +439,7 @@ sub create {
         value         => $value,
       })->store if defined $value;
     }
-    $request->append_unauthenticated_notes( $other ) if $unauthenticated_request;
+    $request->add_unauthenticated_data( $params->{other} ) if $unauthenticated_request;
 
     # -> create response.
     return {

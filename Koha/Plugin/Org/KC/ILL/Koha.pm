@@ -24,7 +24,7 @@ use YAML;
 
 use C4::Context;
 
-our $VERSION = "25.5.1";
+our $VERSION = "25.5.2";
 
 our $metadata = {
     name            => 'ILL plugin Koha <->Koha',

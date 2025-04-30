@@ -439,7 +439,7 @@ sub create {
         value         => $value,
       })->store if defined $value;
     }
-    $request->append_unauthenticated_notes( $other ) if $unauthenticated_request;
+    $request->add_unauthenticated_data( $params->{other} ) if $unauthenticated_request;
 
     # -> create response.
     return {

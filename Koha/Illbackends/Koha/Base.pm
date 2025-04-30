@@ -344,7 +344,9 @@ sub create {
     my ( $brw_count, $brw );
     if ($unauthenticated_request) {
         ( $failed, $result ) = _validate_form_params( $other, $result, $params );
-        if ( !Koha::ILL::Request::unauth_request_data_check($other) ) {
+        return $result if $failed;
+        my $unauth_request_error = Koha::ILL::Request::unauth_request_data_error($other);
+        if ( $unauth_request_error ) {
             $result->{status} = "missing_unauth_data";
             $result->{value}  = $params;
             $failed           = 1;

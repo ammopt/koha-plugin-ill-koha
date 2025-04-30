@@ -342,8 +342,6 @@ sub create {
     };
     my $failed = 0;
     my ( $brw_count, $brw );
-    my $unauthenticated_request =
-        C4::Context->preference("ILLOpacUnauthenticatedRequest") && !$other->{'cardnumber'};
     if ($unauthenticated_request) {
         ( $failed, $result ) = _validate_form_params( $other, $result, $params );
         if ( !Koha::ILL::Request::unauth_request_data_check($other) ) {

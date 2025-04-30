@@ -424,7 +424,7 @@ sub create {
     my $request = $params->{request};
     $request->borrowernumber($other->{borrowernumber});
     $request->branchcode($other->{branchcode});
-    $request->status('NEW');
+    $request->status( $unauthenticated_request ? 'UNAUTH' : 'NEW');
     $request->backend($other->{backend});
     $request->placed(DateTime->now);
     $request->updated(DateTime->now);

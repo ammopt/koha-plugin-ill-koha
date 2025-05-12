@@ -1,7 +1,6 @@
 {
   "name": "koha-plugin-ill-koha",
   "version": "24.5.2",
-  "previous_version": "2.0.7",
   "description": "ILL plugin Koha <-> Koha",
   "devDependencies": {
     "gulp": "^4.0.2",
@@ -9,6 +8,7 @@
     "gulp-run": "^1.7.1"
   },
   "scripts": {
+    "preversion": "sed -i -e \"s/^our \\$VERSION = .*/our \\$VERSION = \\\"$npm_new_version\\\";/\" Koha/Plugin/Org/KC/ILL/Koha.pm; git add -u; rm Koha/Plugin/Org/KC/ILL/Koha.pm-e",
     "test": "echo \"Error: no test specified\" && exit 1",
     "kpz": "echo -n ${npm_package_name}-v${npm_package_version}.kpz",
     "name": "echo -n ${npm_package_name}"

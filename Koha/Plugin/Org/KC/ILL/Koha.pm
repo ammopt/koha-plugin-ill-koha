@@ -22,7 +22,7 @@ use base qw(Koha::Plugins::Base);
 use Mojo::JSON qw(decode_json);
 use YAML;
 
-our $VERSION = "{VERSION}";
+our $VERSION = "24.5.3";
 
 our $metadata = {
     name            => 'ILL plugin Koha <->Koha',

@@ -1,6 +1,6 @@
 {
   "name": "koha-plugin-ill-koha",
-  "version": "24.5.2",
+  "version": "24.5.3",
   "description": "ILL plugin Koha <-> Koha",
   "devDependencies": {
     "gulp": "^4.0.2",

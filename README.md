@@ -6,13 +6,12 @@ This backend provides the ability to create Interlibrary Loan requests by search
 
 You should always choose the version that is equal to or lower than your Koha version. For example:
 
-|               | Plugin Version |             |             |             |
-| Koha version  | v19.6          | v24.5       | v25.5       |
-|:--------------|:--------------:|:-----------:|:-----------:|
-| 22.11         | ✅             | ❌          | ❌          |
-| 24.05         | ❌             | ✅          | ❌          |
-| 24.11         | ❌             | ✅          | ❌          |
-| 25.05         | ❌             | ❌          | ✅          |
+| Koha version  | Plugin v19.6 | Plugin v24.5 | Plugin v25.5 |
+|:--------------|:------------:|:------------:|:------------:|
+| 22.11         | ✅           | ❌            | ❌           |
+| 24.05         | ❌           | ✅            | ❌           |
+| 24.11         | ❌           | ✅            | ❌           |
+| 25.05         | ❌           | ❌            | ✅           |
 
 ## Installing
 

@@ -4,34 +4,35 @@ This backend provides the ability to create Interlibrary Loan requests by search
 
 ## Getting Started
 
-You should always pick the version closest to your Koha version. For example, if `24.05.*` is the newest
-available version and you are on Koha `v24.11.00`, then you pick the latest `v24.05.*` version of the plugin.
+You should always choose the version that is equal to or lower than your Koha version. For example:
+
+|               | Plugin Version |             |             |             |
+| Koha version  | v19.6          | v24.5       | v25.5       |
+|:--------------|:--------------:|:-----------:|:-----------:|
+| 22.11         | ✅             | ❌          | ❌          |
+| 24.05         | ❌             | ✅          | ❌          |
+| 24.11         | ❌             | ✅          | ❌          |
+| 25.05         | ❌             | ❌          | ✅          |
 
 ## Installing
-
-### Post 18.11
 
 * Activate ILL by enabling the `ILLModule` system preference
 * Update the koha configuration to set ILL backend_directory to point to `<backend_directory>/var/lib/koha/${INSTANCE}/plugins/Koha/Illbackends</backend_directory>`
 * Download the latest _.kpz_ file from the [releases](https://gitlab.com/koha-community/plugins/koha-plugin-ill-koha/-/releases) page and install it as any other plugin following the general [plugin install instructions](https://wiki.koha-community.org/wiki/Koha_plugins).
 
-### Prior to 18.11
-* Create a directory in `Koha` called `Illbackends`, so you will end up with `Koha/Illbackends`
-* Clone the repository into this directory, so you will end up with `Koha/Illbackends/koha-ill-koha`
-* In the `koha-ill-koha` directory switch to the branch you wish to use
-* Rename the `koha-ill-koha` directory to `Koha`
-* Activate ILL by enabling the `ILLModule` system preference
-
 ## Configuration
 
 ### REST API
 
-The default behavior is to utilize the configured z39.50 server as well as its configured ILSDI endpoint.
+The default behavior is to utilize the configured z39.50 server as well as its configured ILS-DI endpoint.
 However, if a 'rest_api_endpoint' if configured, the search will be performed using the REST API instead.
+
+The YAML configuration may have both REST API or ILS-DI (default) interface servers.
 
 ### REST API example
 
-```
+```yaml
+---
 targets:
   RemoteKoha:
     rest_api_endpoint: https://kohaopacurl.com
@@ -41,18 +42,10 @@ framework: ILL
 ```
 
 Requires RemoteKoha to have `RESTBasicAuth` enabled.
-The YAML configuration may have both RESTAPI or ILSDI (default) interface servers.
 
-### IllLog syspref
+### Z39.50 example
 
-The plugin makes use of the IllLog syspref to log various actions, including notices sent.
-
-### Post 18.11
-
-The plugin configuration is an HTML text area in which a _YAML_ structure is pasted. The available options
-are maintained on this document. Example:
-
-```
+```yaml
 targets:
   KOHA_1:
     ZID: 6   # ID of remote koha instance as configured as a z3950 target
@@ -66,6 +59,7 @@ targets:
     password: remote_koha_ill_userpassword
 framework: ILL
 ```
-### Prior to 18.11
 
-Configuration required local changes to be done in the Base.pm file.
+### IllLog syspref
+
+The plugin makes use of the IllLog syspref to log various actions, including notices sent.

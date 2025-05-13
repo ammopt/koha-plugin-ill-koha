@@ -179,6 +179,7 @@ sub metadata {
     my $issn                     = scalar $attrs->find( { type => 'issn' } );
     my $doi                      = scalar $attrs->find( { type => 'doi' } );
     my $year                     = scalar $attrs->find( { type => 'year' } );
+    my $published_date           = scalar $attrs->find( { type => 'published_date' } );
     my $previous_requested_items = scalar $attrs->find( { type => 'previous_requested_items' } );
 
     return {
@@ -194,7 +195,8 @@ sub metadata {
         "Target Library ID"        => $target_library_id        ? $target_library_id->value        : undef,
         "Target Library Email"     => $target_library_email     ? $target_library_email->value     : undef,
         "Target Library Name"      => $target_library_name      ? $target_library_name->value      : undef,
-        Year                       => $year                     ? $year->value                   : undef,
+        Year                       => $year                     ? $year->value                     : undef,
+        "Publication date"         => $published_date           ? $published_date->value           : undef,
         "Previous requested items" => $previous_requested_items ? $previous_requested_items->value : undef
     };
 }
@@ -1117,6 +1119,7 @@ sub _search {
         $result->{remote_biblio_id} = $result->{biblio_id};
         $result->{doi} = $other->{doi};
         $result->{year} = $other->{year};
+        $result->{published_date} = $other->{published_date};
         $result->{article_title} = $other->{article_title};
         $result->{unauthenticated_first_name} = $other->{unauthenticated_first_name};
         $result->{unauthenticated_last_name} = $other->{unauthenticated_last_name};
@@ -1339,6 +1342,7 @@ sub _get_request_details {
       author              => $request->{author},
       isbn                => $request->{isbn},
       year                => $request->{year},
+      published_date      => $request->{published_date},
       issn                => $request->{issn},
       doi                 => $request->{doi},
   };

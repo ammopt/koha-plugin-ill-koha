@@ -87,6 +87,7 @@
           _ "&amp;isbn=" _ result.isbn
           _ "&amp;doi=" _ result.doi
           _ "&amp;year=" _ result.year
+          _ "&amp;published_date=" _ result.published_date
           _ "&amp;article_title=" _ result.article_title
           _ "&amp;remote_biblio_id=" _ result.remote_biblio_id
           _ "&amp;breedingid=" _ result.breedingid %]

@@ -35,7 +35,6 @@
     var toggleButton = document.getElementById('toggle-button');
     var toggleArrow = document.getElementById('toggle-arrow');
     if (details.style.display === 'none') {
-      console.log('hello');
       details.style.display = 'block';
       toggleButton.textContent = 'Hide request details';
       toggleArrow.className = 'fa fa-caret-up';
@@ -48,7 +47,7 @@
 </script>
 [% END %]
 </fieldset>
-<table>
+<table id="results_table">
       <thead>
         <tr>
           <th id="partner">Partner</th>

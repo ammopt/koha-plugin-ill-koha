@@ -512,6 +512,12 @@ sub migrate {
 
       my @previous_requested_items_array = $previous_requested_items && $previous_requested_items->value ? split( /\|/, $previous_requested_items->value ) : ();
 
+      my $ea_unblessed = $params->{request}->extended_attributes->unblessed;
+      my %ea_mapped    = map { $_->{type} => $_->{value} } @$ea_unblessed;
+
+      my $request_details = _get_request_details( \%ea_mapped );
+      $params->{other} = { %$request_details, %{$params->{other}} };
+
       # Construct the response
       my $response = {
         cwd           => dirname(__FILE__),

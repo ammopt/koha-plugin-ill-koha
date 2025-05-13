@@ -85,6 +85,7 @@
                         _ "&amp;unauthenticated_last_name=" _ result.unauthenticated_last_name
                         _ "&amp;unauthenticated_email=" _ result.unauthenticated_email
                         _ "&amp;year=" _ result.year
+                        _ "&amp;published_date=" _ result.published_date
                         _ "&amp;article_title=" _ result.article_title
                         _ "&amp;remote_biblio_id=" _ result.remote_biblio_id
                         _ "&amp;id=" _ result.id %]

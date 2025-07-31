@@ -713,18 +713,18 @@ sub confirm {
           return _return_template_error( 'Required target library email not found.', $value )
               unless $target_library_email;
 
-          my $from_address = Koha::Libraries->find( $request->branchcode )->branchillemail
+          my $reply_address = Koha::Libraries->find( $request->branchcode )->branchillemail
               || Koha::Libraries->find( $request->branchcode )->branchemail;
           return _return_template_error( "Required destination library ("
                   . Koha::Libraries->find( $request->branchcode )->branchname
                   . ") ILL email or library email not found.", $value )
-              unless $from_address;
+              unless $reply_address;
 
           my $enqueue_letter = C4::Letters::EnqueueLetter(
               {
                   letter                 => $letter,
                   from_address           => $from_address,
-                  reply_address          => $from_address,
+                  reply_address          => $reply_address,
                   to_address             => $target_library_email->value,
                   message_transport_type => 'email',
               }

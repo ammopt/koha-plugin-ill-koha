@@ -715,10 +715,13 @@ sub confirm {
 
           my $reply_address = Koha::Libraries->find( $request->branchcode )->branchillemail
               || Koha::Libraries->find( $request->branchcode )->branchemail;
+
+          my $from_address = Koha::Libraries->find( $request->branchcode )->from_email_address;
+              
           return _return_template_error( "Required destination library ("
                   . Koha::Libraries->find( $request->branchcode )->branchname
                   . ") ILL email or library email not found.", $value )
-              unless $reply_address;
+              unless $reply_address && $from_address;
 
           my $enqueue_letter = C4::Letters::EnqueueLetter(
               {

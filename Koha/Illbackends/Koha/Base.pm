@@ -180,6 +180,9 @@ sub metadata {
     my $doi                      = scalar $attrs->find( { type => 'doi' } );
     my $year                     = scalar $attrs->find( { type => 'year' } );
     my $published_date           = scalar $attrs->find( { type => 'published_date' } );
+    my $pages                    = scalar $attrs->find( { type => 'pages' } );
+    my $volume                   = scalar $attrs->find( { type => 'volume' } );
+    my $issue                    = scalar $attrs->find( { type => 'issue' } );
     my $previous_requested_items = scalar $attrs->find( { type => 'previous_requested_items' } );
 
     return {
@@ -197,6 +200,9 @@ sub metadata {
         "Target Library Name"      => $target_library_name      ? $target_library_name->value      : undef,
         Year                       => $year                     ? $year->value                     : undef,
         "Publication date"         => $published_date           ? $published_date->value           : undef,
+        "Pages"                    => $pages                    ? $pages->value                    : undef,
+        "Volume"                   => $volume                   ? $volume->value                   : undef,
+        "Issue"                    => $issue                    ? $issue->value                    : undef,
         "Previous requested items" => $previous_requested_items ? $previous_requested_items->value : undef
     };
 }
@@ -1123,6 +1129,9 @@ sub _search {
         $result->{doi} = $other->{doi};
         $result->{year} = $other->{year};
         $result->{published_date} = $other->{published_date};
+        $result->{pages} = $other->{pages};
+        $result->{volume} = $other->{volume};
+        $result->{issue} = $other->{issue};
         $result->{article_title} = $other->{article_title};
         $result->{unauthenticated_first_name} = $other->{unauthenticated_first_name};
         $result->{unauthenticated_last_name} = $other->{unauthenticated_last_name};
@@ -1346,6 +1355,9 @@ sub _get_request_details {
       isbn                => $request->{isbn},
       year                => $request->{year},
       published_date      => $request->{published_date},
+      pages               => $request->{pages},
+      volume              => $request->{volume},
+      issue               => $request->{issue},
       issn                => $request->{issn},
       doi                 => $request->{doi},
   };

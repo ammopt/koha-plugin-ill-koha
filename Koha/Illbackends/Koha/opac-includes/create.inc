@@ -112,9 +112,38 @@
                                     </td>
                                     <td>
                                     [% IF itemnumber == whole.current_item || whole.previous_requested_items.grep('^' _ itemnumber _ '$').size%]
-                                        <a class="btn btn-sm btn-default disabled" href="[% target _ "&amp;target_item_id=" _ itemnumber _ "&amp;target_library_id=" _ item.home_library_id _ "&amp;target_library_name=" _ item.libraryname %]">Request this item</a>
+                                        <a class="btn btn-sm btn-default disabled">Request this item</a>
                                     [% ELSE %]
-                                        <a class="btn btn-sm btn-default" href="[% target _ "&amp;target_item_id=" _ itemnumber _ "&amp;target_library_id=" _ item.home_library_id _ "&amp;target_library_name=" _ item.libraryname %]">Request this item</a>
+                                        <form action="/cgi-bin/koha/opac-illrequests.pl" method="POST">
+                                            [% INCLUDE 'csrf-token.inc' %]
+                                            <input type="hidden" name="method" value="[% whole.method | html %]"/>
+                                            <input type="hidden" name="stage" value="[% whole.stage | html %]"/>
+                                            <input type="hidden" name="backend" value="[% whole.backend | html %]"/>
+                                            <input type="hidden" name="branchcode" value="[% whole.branchcode | html %]"/>
+                                            <input type="hidden" name="borrowernumber" value="[% whole.borrowernumber | html %]"/>
+                                            <input type="hidden" name="target" value="[% result.server | html %]"/>
+                                            <input type="hidden" name="illrequest_id" value="[% whole.illrequest_id | html %]"/>
+                                            <input type="hidden" name="author" value="[% result.author | html %]"/>
+                                            <input type="hidden" name="title" value="[% result.title | html %]"/>
+                                            <input type="hidden" name="issn" value="[% result.issn | html %]"/>
+                                            <input type="hidden" name="isbn" value="[% result.isbn | html %]"/>
+                                            <input type="hidden" name="doi" value="[% result.doi | html %]"/>
+                                            <input type="hidden" name="unauthenticated_first_name" value="[% result.unauthenticated_first_name | html %]"/>
+                                            <input type="hidden" name="unauthenticated_last_name" value="[% result.unauthenticated_last_name | html %]"/>
+                                            <input type="hidden" name="unauthenticated_email" value="[% result.unauthenticated_email | html %]"/>
+                                            <input type="hidden" name="year" value="[% result.year | html %]"/>
+                                            <input type="hidden" name="published_date" value="[% result.published_date | html %]"/>
+                                            <input type="hidden" name="pages" value="[% result.pages | html %]"/>
+                                            <input type="hidden" name="volume" value="[% result.volume | html %]"/>
+                                            <input type="hidden" name="issue" value="[% result.issue | html %]"/>
+                                            <input type="hidden" name="article_title" value="[% result.article_title | html %]"/>
+                                            <input type="hidden" name="remote_biblio_id" value="[% result.remote_biblio_id | html %]"/>
+                                            <input type="hidden" name="id" value="[% result.id | html %]"/>
+                                            <input type="hidden" name="target_item_id" value="[% itemnumber | html %]"/>
+                                            <input type="hidden" name="target_library_id" value="[% home_library_id | html %]"/>
+                                            <input type="hidden" name="target_library_name" value="[% item.libraryname | html %]"/>
+                                            <input type="submit" class="btn btn-sm btn-default" value="Request this item"/>
+                                        </form>
                                     [% END %]
                                     </td>
                                 </tr>

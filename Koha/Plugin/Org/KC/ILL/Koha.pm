@@ -76,17 +76,6 @@ sub configure {
     }
 }
 
-sub opac_js {
-    my ($self) = @_;
-
-    my $script = '<script>';
-    $script .= $self->mbf_read('js/ill-autobackend.js')
-        if C4::Context->preference('AutoILLBackendPriority');
-    $script .= '</script>';
-
-    return $script;
-}
-
 sub configuration {
     my ($self) = @_;
 

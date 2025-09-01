@@ -140,7 +140,7 @@
                                             <input type="hidden" name="remote_biblio_id" value="[% result.remote_biblio_id | html %]"/>
                                             <input type="hidden" name="id" value="[% result.id | html %]"/>
                                             <input type="hidden" name="target_item_id" value="[% itemnumber | html %]"/>
-                                            <input type="hidden" name="target_library_id" value="[% home_library_id | html %]"/>
+                                            <input type="hidden" name="target_library_id" value="[% item.home_library_id | html %]"/>
                                             <input type="hidden" name="target_library_name" value="[% item.libraryname | html %]"/>
                                             <input type="submit" class="btn btn-sm btn-default" value="Request this item"/>
                                         </form>

@@ -90,6 +90,7 @@
                         _ "&amp;volume=" _ result.volume
                         _ "&amp;issue=" _ result.issue
                         _ "&amp;article_title=" _ result.article_title
+                        _ "&amp;article_author=" _ result.article_author
                         _ "&amp;remote_biblio_id=" _ result.remote_biblio_id
                         _ "&amp;id=" _ result.id %]
                         <td>
@@ -137,6 +138,7 @@
                                             <input type="hidden" name="volume" value="[% result.volume | html %]"/>
                                             <input type="hidden" name="issue" value="[% result.issue | html %]"/>
                                             <input type="hidden" name="article_title" value="[% result.article_title | html %]"/>
+                                            <input type="hidden" name="article_author" value="[% result.article_author | html %]"/>
                                             <input type="hidden" name="remote_biblio_id" value="[% result.remote_biblio_id | html %]"/>
                                             <input type="hidden" name="id" value="[% result.id | html %]"/>
                                             <input type="hidden" name="target_item_id" value="[% itemnumber | html %]"/>

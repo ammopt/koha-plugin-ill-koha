@@ -92,6 +92,7 @@
           _ "&amp;volume=" _ result.volume
           _ "&amp;issue=" _ result.issue
           _ "&amp;article_title=" _ result.article_title
+          _ "&amp;article_author=" _ result.article_author
           _ "&amp;remote_biblio_id=" _ result.remote_biblio_id
           _ "&amp;breedingid=" _ result.breedingid %]
           <td>

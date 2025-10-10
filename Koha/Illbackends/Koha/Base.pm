@@ -169,6 +169,7 @@ sub metadata {
     my $id                       = scalar $attrs->find( { type => 'bib_id' } );
     my $title                    = scalar $attrs->find( { type => 'title' } );
     my $article_title            = scalar $attrs->find( { type => 'article_title' } );
+    my $article_author           = scalar $attrs->find( { type => 'article_author' } );
     my $author                   = scalar $attrs->find( { type => 'author' } );
     my $target                   = scalar $attrs->find( { type => 'target' } );
     my $target_item_id           = scalar $attrs->find( { type => 'target_item_id' } );
@@ -189,6 +190,7 @@ sub metadata {
         ID                         => $id                       ? $id->value                       : undef,
         Title                      => $title                    ? $title->value                    : undef,
         "Article Title"            => $article_title            ? $article_title->value            : undef,
+        "Article Author"           => $article_author           ? $article_author->value           : undef,
         Author                     => $author                   ? $author->value                   : undef,
         ISBN                       => $isbn                     ? $isbn->value                     : undef,
         ISSN                       => $issn                     ? $issn->value                     : undef,
@@ -1142,6 +1144,7 @@ sub _search {
         $result->{volume} = $other->{volume};
         $result->{issue} = $other->{issue};
         $result->{article_title} = $other->{article_title};
+        $result->{article_author} = $other->{article_author};
         $result->{unauthenticated_first_name} = $other->{unauthenticated_first_name};
         $result->{unauthenticated_last_name} = $other->{unauthenticated_last_name};
         $result->{unauthenticated_email} = $other->{unauthenticated_email};
@@ -1359,6 +1362,7 @@ sub _get_request_details {
       target_library_name => $request->{target_library_name},
       bib_id              => $remote_id,
       article_title       => $request->{article_title},
+      article_author      => $request->{article_author},
       title               => $request->{title},
       author              => $request->{author},
       isbn                => $request->{isbn},

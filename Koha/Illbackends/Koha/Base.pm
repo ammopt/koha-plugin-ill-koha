@@ -1121,6 +1121,15 @@ sub _search {
 
       _add_libraries_info( $decoded_content, $target->{rest_api_endpoint}, $encoded_login );
 
+      if ( $other->{op} eq 'migrate' && $other->{illrequest_id} ) {
+          my $migrated_from_request = Koha::ILL::Requests->find( $other->{illrequest_id} );
+          my $migrated_from_attributes =
+              { map { $_->type => $_->value } ( $migrated_from_request->extended_attributes->as_list ) };
+          foreach my $key ( keys %$migrated_from_attributes ) {
+              $other->{$key} = $migrated_from_attributes->{$key} unless exists $other->{$key};
+          }
+      }
+
       foreach my $result ( @{$decoded_content} ) {
         $result->{server} = $target_key;
         $result->{record_link} =

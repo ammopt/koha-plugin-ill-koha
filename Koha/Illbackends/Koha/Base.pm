@@ -1089,10 +1089,10 @@ sub _search {
       my $search_params;
       if ( $search->{issn} ) {
           $search->{issn} =~ s/^\s+|\s+$//g;
-          push( @{ $search_params->{'-or'} }, [ { 'issn' => $search->{issn} } ] );
+          push( @{ $search_params->{'-or'} }, [ { 'issn' => { 'like' => uri_escape('%' . $search->{issn} . '%') } } ] );
       } elsif ( $search->{isbn} ) {
           $search->{isbn} =~ s/^\s+|\s+$//g;
-          push( @{ $search_params->{'-or'} }, [ { 'isbn' => $search->{isbn} } ] );
+          push( @{ $search_params->{'-or'} }, [ { 'isbn' => { 'like' => uri_escape('%' . $search->{isbn} . '%') } } ] );
       } else {
           if ( $search->{title} ) {
               push( @{ $search_params->{'-or'} }, [ { 'title' => { 'like' => '%' . $search->{title} . '%' } } ] );

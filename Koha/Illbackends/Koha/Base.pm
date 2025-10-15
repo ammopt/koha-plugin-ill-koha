@@ -1088,11 +1088,21 @@ sub _search {
       next if ( !$target->{rest_api_endpoint} );
       my $search_params;
       if ( $search->{issn} ) {
-          $search->{issn} =~ s/^\s+|\s+$//g;
-          push( @{ $search_params->{'-or'} }, [ { 'issn' => { 'like' => uri_escape('%' . $search->{issn} . '%') } } ] );
+        my @issn_variations = C4::Koha::GetVariationsOfISSN( $search->{issn} );
+        foreach my $issn (@issn_variations) {
+            push(
+                @{ $search_params->{'-or'} },
+                [ { 'issn' => { 'like' => uri_escape( '%' . $issn . '%' ) } } ]
+            );
+        }
       } elsif ( $search->{isbn} ) {
-          $search->{isbn} =~ s/^\s+|\s+$//g;
-          push( @{ $search_params->{'-or'} }, [ { 'isbn' => { 'like' => uri_escape('%' . $search->{isbn} . '%') } } ] );
+          my @isbn_variations = C4::Koha::GetVariationsOfISBN( $search->{isbn} );
+          foreach my $isbn (@isbn_variations) {
+              push(
+                  @{ $search_params->{'-or'} },
+                  [ { 'isbn' => { 'like' => uri_escape( '%' . $isbn . '%' ) } } ]
+              );
+          }
       } else {
           if ( $search->{title} ) {
               push( @{ $search_params->{'-or'} }, [ { 'title' => { 'like' => '%' . $search->{title} . '%' } } ] );

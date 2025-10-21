@@ -84,18 +84,11 @@
           _ "&amp;author=" _ result.author
           _ "&amp;title=" _ result.title
           _ "&amp;issn=" _ result.issn
-          _ "&amp;eissn=" _ result.eissn
           _ "&amp;isbn=" _ result.isbn
-          _ "&amp;doi=" _ result.doi
-          _ "&amp;year=" _ result.year
-          _ "&amp;published_date=" _ result.published_date
-          _ "&amp;pages=" _ result.pages
-          _ "&amp;volume=" _ result.volume
-          _ "&amp;issue=" _ result.issue
-          _ "&amp;article_title=" _ result.article_title
-          _ "&amp;article_author=" _ result.article_author
           _ "&amp;remote_biblio_id=" _ result.remote_biblio_id
-          _ "&amp;breedingid=" _ result.breedingid %]
+          _ "&amp;breedingid=" _ result.breedingid
+          _ result.URL_fields_to_append_string
+          %]
           <td>
             [% IF result.api_items %]
               <table class="w-100">

@@ -79,21 +79,11 @@
                         _ "&amp;author=" _ result.author
                         _ "&amp;title=" _ result.title
                         _ "&amp;issn=" _ result.issn
-                        _ "&amp;eissn=" _ result.eissn
                         _ "&amp;isbn=" _ result.isbn
-                        _ "&amp;doi=" _ result.doi
-                        _ "&amp;unauthenticated_first_name=" _ result.unauthenticated_first_name
-                        _ "&amp;unauthenticated_last_name=" _ result.unauthenticated_last_name
-                        _ "&amp;unauthenticated_email=" _ result.unauthenticated_email
-                        _ "&amp;year=" _ result.year
-                        _ "&amp;published_date=" _ result.published_date
-                        _ "&amp;pages=" _ result.pages
-                        _ "&amp;volume=" _ result.volume
-                        _ "&amp;issue=" _ result.issue
-                        _ "&amp;article_title=" _ result.article_title
-                        _ "&amp;article_author=" _ result.article_author
                         _ "&amp;remote_biblio_id=" _ result.remote_biblio_id
-                        _ "&amp;id=" _ result.id %]
+                        _ "&amp;id=" _ result.id
+                        _ result.URL_fields_to_append_string
+                        %]
                         <td>
                             [% IF result.api_items %]
                             <table class="w-100">
@@ -128,24 +118,19 @@
                                             <input type="hidden" name="author" value="[% result.author | html %]"/>
                                             <input type="hidden" name="title" value="[% result.title | html %]"/>
                                             <input type="hidden" name="issn" value="[% result.issn | html %]"/>
-                                            <input type="hidden" name="eissn" value="[% result.eissn | html %]"/>
                                             <input type="hidden" name="isbn" value="[% result.isbn | html %]"/>
-                                            <input type="hidden" name="doi" value="[% result.doi | html %]"/>
-                                            <input type="hidden" name="unauthenticated_first_name" value="[% result.unauthenticated_first_name | html %]"/>
-                                            <input type="hidden" name="unauthenticated_last_name" value="[% result.unauthenticated_last_name | html %]"/>
-                                            <input type="hidden" name="unauthenticated_email" value="[% result.unauthenticated_email | html %]"/>
-                                            <input type="hidden" name="year" value="[% result.year | html %]"/>
-                                            <input type="hidden" name="published_date" value="[% result.published_date | html %]"/>
-                                            <input type="hidden" name="pages" value="[% result.pages | html %]"/>
-                                            <input type="hidden" name="volume" value="[% result.volume | html %]"/>
-                                            <input type="hidden" name="issue" value="[% result.issue | html %]"/>
-                                            <input type="hidden" name="article_title" value="[% result.article_title | html %]"/>
-                                            <input type="hidden" name="article_author" value="[% result.article_author | html %]"/>
                                             <input type="hidden" name="remote_biblio_id" value="[% result.remote_biblio_id | html %]"/>
                                             <input type="hidden" name="id" value="[% result.id | html %]"/>
                                             <input type="hidden" name="target_item_id" value="[% itemnumber | html %]"/>
                                             <input type="hidden" name="target_library_id" value="[% item.home_library_id | html %]"/>
                                             <input type="hidden" name="target_library_name" value="[% item.libraryname | html %]"/>
+
+                                            [% FOREACH f IN result.URL_fields_to_append_array %]
+                                                [% IF f.value %]
+                                                    <input type="hidden" name="[% f.name | html %]" value="[% f.value | html %]"/>
+                                                [% END %]
+                                            [% END %]
+
                                             <input type="submit" class="btn btn-sm btn-default" value="Request this item"/>
                                         </form>
                                     [% END %]

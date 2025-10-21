@@ -1118,11 +1118,13 @@ sub _search {
             $target->{rest_api_endpoint} . "/cgi-bin/koha/opac-detail.pl?biblionumber=" . $result->{biblio_id};
         $result->{remote_biblio_id} = $result->{biblio_id};
 
-        $result->{fields_to_append} = [];
+        $result->{URL_fields_to_append_string} = '';
+        $result->{URL_fields_to_append_array} = [];
         my $fieldmap        = fieldmap();
         my @fields_to_append = grep { $fieldmap->{$_}->{append_to_rest_result} } keys %{$fieldmap};
         for my $field ( @fields_to_append ) {
-            $result->{$field} = $other->{$field};
+            $result->{URL_fields_to_append_string} .= "&amp;" . $field . "=" . $other->{$field};
+            push @{ $result->{URL_fields_to_append_array}}, { name => $field, value => $other->{$field} };
         }
         push @{ $response->{results} }, $result;
       }

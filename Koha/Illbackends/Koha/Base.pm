@@ -165,48 +165,18 @@ illrequestattributes store.
 
 sub metadata {
     my ( $self, $request ) = @_;
-    my $attrs                    = $request->extended_attributes;
-    my $id                       = scalar $attrs->find( { type => 'bib_id' } );
-    my $title                    = scalar $attrs->find( { type => 'title' } );
-    my $article_title            = scalar $attrs->find( { type => 'article_title' } );
-    my $article_author           = scalar $attrs->find( { type => 'article_author' } );
-    my $author                   = scalar $attrs->find( { type => 'author' } );
-    my $target                   = scalar $attrs->find( { type => 'target' } );
-    my $target_item_id           = scalar $attrs->find( { type => 'target_item_id' } );
-    my $target_library_id        = scalar $attrs->find( { type => 'target_library_id' } );
-    my $target_library_email     = scalar $attrs->find( { type => 'target_library_email' } );
-    my $target_library_name      = scalar $attrs->find( { type => 'target_library_name' } );
-    my $isbn                     = scalar $attrs->find( { type => 'isbn' } );
-    my $issn                     = scalar $attrs->find( { type => 'issn' } );
-    my $doi                      = scalar $attrs->find( { type => 'doi' } );
-    my $year                     = scalar $attrs->find( { type => 'year' } );
-    my $published_date           = scalar $attrs->find( { type => 'published_date' } );
-    my $pages                    = scalar $attrs->find( { type => 'pages' } );
-    my $volume                   = scalar $attrs->find( { type => 'volume' } );
-    my $issue                    = scalar $attrs->find( { type => 'issue' } );
-    my $previous_requested_items = scalar $attrs->find( { type => 'previous_requested_items' } );
+    
+    my $attrs           = $request->extended_attributes;
+    my $fieldmap        = fieldmap();
+    my @metadata_fields = grep { $fieldmap->{$_}->{is_metadata} } keys %{$fieldmap};
 
-    return {
-        ID                         => $id                       ? $id->value                       : undef,
-        Title                      => $title                    ? $title->value                    : undef,
-        "Article Title"            => $article_title            ? $article_title->value            : undef,
-        "Article Author"           => $article_author           ? $article_author->value           : undef,
-        Author                     => $author                   ? $author->value                   : undef,
-        ISBN                       => $isbn                     ? $isbn->value                     : undef,
-        ISSN                       => $issn                     ? $issn->value                     : undef,
-        DOI                        => $doi                      ? $doi->value                      : undef,
-        Target                     => $target                   ? $target->value                   : undef,
-        "Target Item ID"           => $target_item_id           ? $target_item_id->value           : undef,
-        "Target Library ID"        => $target_library_id        ? $target_library_id->value        : undef,
-        "Target Library Email"     => $target_library_email     ? $target_library_email->value     : undef,
-        "Target Library Name"      => $target_library_name      ? $target_library_name->value      : undef,
-        Year                       => $year                     ? $year->value                     : undef,
-        "Publication date"         => $published_date           ? $published_date->value           : undef,
-        "Pages"                    => $pages                    ? $pages->value                    : undef,
-        "Volume"                   => $volume                   ? $volume->value                   : undef,
-        "Issue"                    => $issue                    ? $issue->value                    : undef,
-        "Previous requested items" => $previous_requested_items ? $previous_requested_items->value : undef
-    };
+    my $result;
+    for my $type ( @metadata_fields ) {
+        my $attr = $attrs->find( { type => $type } );
+        $result->{ $fieldmap->{$type}->{label} } = $attr->value if $attr;
+    }
+
+    return $result;
 }
 
 =head3 capabilities
@@ -1147,18 +1117,13 @@ sub _search {
         $result->{record_link} =
             $target->{rest_api_endpoint} . "/cgi-bin/koha/opac-detail.pl?biblionumber=" . $result->{biblio_id};
         $result->{remote_biblio_id} = $result->{biblio_id};
-        $result->{doi} = $other->{doi};
-        $result->{year} = $other->{year};
-        $result->{published_date} = $other->{published_date};
-        $result->{pages} = $other->{pages};
-        $result->{volume} = $other->{volume};
-        $result->{issue} = $other->{issue};
-        $result->{article_title} = $other->{article_title};
-        $result->{article_author} = $other->{article_author};
-        $result->{unauthenticated_first_name} = $other->{unauthenticated_first_name};
-        $result->{unauthenticated_last_name} = $other->{unauthenticated_last_name};
-        $result->{unauthenticated_email} = $other->{unauthenticated_email};
 
+        $result->{fields_to_append} = [];
+        my $fieldmap        = fieldmap();
+        my @fields_to_append = grep { $fieldmap->{$_}->{append_to_rest_result} } keys %{$fieldmap};
+        for my $field ( @fields_to_append ) {
+            $result->{$field} = $other->{$field};
+        }
         push @{ $response->{results} }, $result;
       }
   }
@@ -1365,25 +1330,137 @@ data, and returns a hashref with the details.
 sub _get_request_details {
   my ( $request, $remote_id ) = @_;
 
-  return {
-      target              => $request->{target},
-      target_item_id      => $request->{target_item_id},
-      target_library_id   => $request->{target_library_id},
-      target_library_name => $request->{target_library_name},
-      bib_id              => $remote_id,
-      article_title       => $request->{article_title},
-      article_author      => $request->{article_author},
-      title               => $request->{title},
-      author              => $request->{author},
-      isbn                => $request->{isbn},
-      year                => $request->{year},
-      published_date      => $request->{published_date},
-      pages               => $request->{pages},
-      volume              => $request->{volume},
-      issue               => $request->{issue},
-      issn                => $request->{issn},
-      doi                 => $request->{doi},
-  };
+  my $result;
+  my $fieldmap               = fieldmap();
+  my @request_details_fields = grep { $fieldmap->{$_}->{is_metadata} } keys %{$fieldmap};
+  for my $field (@request_details_fields) {
+      $result->{$field} = $request->{$field};
+  }
+
+  $result->{bib_id} = $remote_id;
+
+  return $result;
+}
+
+=head2 fieldmap
+
+Returns a hashref mapping field names to metadata config.
+
+Each entry contains may contain:
+
+label — human-readable name
+is_metadata — boolean (to show on 'manage request' or not)
+append_to_rest_result — boolean (to append to REST search results or not). Some fields already come from supplying Koha (e.g. ISSN, ID, etc) but other fields may be coming from 'Standard' form (If AutoILL), or from original request this is being migrated from and need to be appended
+
+=cut
+
+sub fieldmap {
+    return {
+        bib_id => {
+            label       => 'ID',
+            is_metadata => 1,
+        },
+        title => {
+            label       => 'Title',
+            is_metadata => 1,
+        },
+        article_title => {
+            label                 => 'Article Title',
+            is_metadata           => 1,
+            append_to_rest_result => 1,
+        },
+        article_author => {
+            label                 => 'Article Author',
+            is_metadata           => 1,
+            append_to_rest_result => 1,
+        },
+        author => {
+            label       => 'Author',
+            is_metadata => 1,
+        },
+        isbn => {
+            label       => 'ISBN',
+            is_metadata => 1,
+        },
+        issn => {
+            label       => 'ISSN',
+            is_metadata => 1,
+        },
+        eissn => {
+            label                 => 'eISSN',
+            is_metadata           => 1,
+            append_to_rest_result => 1,
+        },
+        doi => {
+            label                 => 'DOI',
+            is_metadata           => 1,
+            append_to_rest_result => 1,
+        },
+        target => {
+            label       => 'Target',
+            is_metadata => 1,
+        },
+        target_item_id => {
+            label       => 'Target Item ID',
+            is_metadata => 1,
+        },
+        target_library_id => {
+            label       => 'Target Library ID',
+            is_metadata => 1,
+        },
+        target_library_email => {
+            label       => 'Target Library Email',
+            is_metadata => 1,
+        },
+        target_library_name => {
+            label       => 'Target Library Name',
+            is_metadata => 1,
+        },
+        year => {
+            label                 => 'Year',
+            is_metadata           => 1,
+            append_to_rest_result => 1,
+        },
+        published_date => {
+            label                 => 'Publication date',
+            is_metadata           => 1,
+            append_to_rest_result => 1,
+        },
+        pages => {
+            label                 => 'Pages',
+            is_metadata           => 1,
+            append_to_rest_result => 1,
+        },
+        volume => {
+            label                 => 'Volume',
+            is_metadata           => 1,
+            append_to_rest_result => 1,
+        },
+        issue => {
+            label                 => 'Issue',
+            is_metadata           => 1,
+            append_to_rest_result => 1,
+        },
+        unauthenticated_first_name => {
+            label                 => 'Unauthenticated first name',
+            is_metadata           => 0,
+            append_to_rest_result => 1,
+        },
+        unauthenticated_last_name => {
+            label                 => 'Unauthenticated last name',
+            is_metadata           => 0,
+            append_to_rest_result => 1,
+        },
+        unauthenticated_email => {
+            label                 => 'Unauthenticated email',
+            is_metadata           => 0,
+            append_to_rest_result => 1,
+        },
+        previous_requested_items => {
+            label       => 'Previous requested items',
+            is_metadata => 1,
+        },
+    };
 }
 
 =head3 _add_from_breeding

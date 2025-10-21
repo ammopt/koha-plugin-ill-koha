@@ -84,6 +84,7 @@
           _ "&amp;author=" _ result.author
           _ "&amp;title=" _ result.title
           _ "&amp;issn=" _ result.issn
+          _ "&amp;eissn=" _ result.eissn
           _ "&amp;isbn=" _ result.isbn
           _ "&amp;doi=" _ result.doi
           _ "&amp;year=" _ result.year

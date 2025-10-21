@@ -79,6 +79,7 @@
                         _ "&amp;author=" _ result.author
                         _ "&amp;title=" _ result.title
                         _ "&amp;issn=" _ result.issn
+                        _ "&amp;eissn=" _ result.eissn
                         _ "&amp;isbn=" _ result.isbn
                         _ "&amp;doi=" _ result.doi
                         _ "&amp;unauthenticated_first_name=" _ result.unauthenticated_first_name
@@ -127,6 +128,7 @@
                                             <input type="hidden" name="author" value="[% result.author | html %]"/>
                                             <input type="hidden" name="title" value="[% result.title | html %]"/>
                                             <input type="hidden" name="issn" value="[% result.issn | html %]"/>
+                                            <input type="hidden" name="eissn" value="[% result.eissn | html %]"/>
                                             <input type="hidden" name="isbn" value="[% result.isbn | html %]"/>
                                             <input type="hidden" name="doi" value="[% result.doi | html %]"/>
                                             <input type="hidden" name="unauthenticated_first_name" value="[% result.unauthenticated_first_name | html %]"/>

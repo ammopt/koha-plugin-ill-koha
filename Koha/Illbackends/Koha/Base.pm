@@ -528,7 +528,7 @@ sub migrate {
       my $new_request = $params->{request};
       $new_request->borrowernumber($original_request->borrowernumber);
       $new_request->branchcode($original_request->branchcode);
-      $new_request->status('NEW');
+      $new_request->status('NEW') unless $new_request->status eq 'UNAUTH';
       $new_request->backend($self->name);
       $new_request->placed(DateTime->now);
       $new_request->updated(DateTime->now);
@@ -610,7 +610,7 @@ sub migrate {
 sub clean_up_request {
     my ($request) = @_;
 
-    $request->status("REQREV");
+    $request->status("REQREV") unless $request->status eq 'UNAUTH';
     $request->orderid(undef);
     $request->store;
 }

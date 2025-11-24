@@ -108,10 +108,11 @@
                       [% END %]
                     </td>
                     <td>
+                      [% safe_notes = item.public_notes | uri %]
                       [% IF itemnumber == whole.current_item || whole.previous_requested_items.grep('^' _ itemnumber _ '$').size%]
-                        <a class="btn btn-sm btn-default disabled" href="[% target _ "&amp;target_item_id=" _ itemnumber _ "&amp;target_library_id=" _ item.home_library_id _ "&amp;target_library_name=" _ item.libraryname %]">Request this item</a>
+                        <a class="btn btn-sm btn-default disabled" href="[% target _ "&amp;target_item_id=" _ itemnumber _ "&amp;target_library_id=" _ item.home_library_id _ "&amp;target_library_name=" _ item.libraryname _ "&amp;target_item_notes=" _ safe_notes %]">Request this item</a>
                       [% ELSE %]
-                        <a class="btn btn-sm btn-default" href="[% target _ "&amp;target_item_id=" _ itemnumber _ "&amp;target_library_id=" _ item.home_library_id _ "&amp;target_library_name=" _ item.libraryname %]">Request this item</a>
+                        <a class="btn btn-sm btn-default" href="[% target _ "&amp;target_item_id=" _ itemnumber _ "&amp;target_library_id=" _ item.home_library_id _ "&amp;target_library_name=" _ item.libraryname _ "&amp;target_item_notes=" _ safe_notes %]">Request this item</a>
                       [% END %]
                     </td>
                   </tr>

@@ -124,6 +124,7 @@
                                             <input type="hidden" name="target_item_id" value="[% itemnumber | html %]"/>
                                             <input type="hidden" name="target_library_id" value="[% item.home_library_id | html %]"/>
                                             <input type="hidden" name="target_library_name" value="[% item.libraryname | html %]"/>
+                                            <input type="hidden" name="target_item_notes" value="[% item.public_notes | html %]"/>
 
                                             [% FOREACH f IN result.URL_fields_to_append_array %]
                                                 [% IF f.value %]

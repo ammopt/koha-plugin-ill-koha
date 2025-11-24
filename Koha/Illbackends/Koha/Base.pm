@@ -544,6 +544,8 @@ sub migrate {
           $bib_id_attr->delete if $bib_id_attr;
           my $target_item_id_attr = $new_request->extended_attributes->find( { type => 'target_item_id' } );
           $target_item_id_attr->delete if $target_item_id_attr;
+          my $target_item_notes_attr = $new_request->extended_attributes->find( { type => 'target_item_notes' } );
+          $target_item_notes_attr->delete if $target_item_notes_attr;
           my $target_library_id_attr = $new_request->extended_attributes->find( { type => 'target_library_id' } );
           $target_library_id_attr->delete if $target_library_id_attr;
           my $target_library_name_attr = $new_request->extended_attributes->find( { type => 'target_library_name' } );
@@ -1404,6 +1406,10 @@ sub fieldmap {
         },
         target_item_id => {
             label       => 'Target Item ID',
+            is_metadata => 1,
+        },
+        target_item_notes => {
+            label       => 'Target Item Public Notes',
             is_metadata => 1,
         },
         target_library_id => {

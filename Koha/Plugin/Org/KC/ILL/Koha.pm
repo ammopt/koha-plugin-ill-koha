@@ -24,14 +24,14 @@ use YAML;
 
 use C4::Context;
 
-our $VERSION = "25.6.4";
+our $VERSION = "25.11.0";
 
 our $metadata = {
     name            => 'ILL plugin Koha <->Koha',
     author          => 'Koha Community',
     date_authored   => '2018-09-10',
-    date_updated    => "2025-11-24",
-    minimum_version => '24.05',
+    date_updated    => "2025-12-11",
+    minimum_version => '25.11',
     maximum_version => undef,
     version         => $VERSION,
     description     => 'ILL plugin Koha <->Koha'

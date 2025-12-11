@@ -411,14 +411,7 @@ sub create {
     $request->biblio_id($biblionumber) if $other->{breedingid};
     $request->store;
 
-    # ...Populate Illrequestattributes
-    while (my ($type, $value) = each %{$request_details}) {
-      Koha::ILL::Request::Attribute->new({
-        illrequest_id => $request->illrequest_id,
-        type          => $type,
-        value         => $value,
-      })->store if defined $value;
-    }
+    $request->add_or_update_attributes($request_details);
     $request->add_unauthenticated_data( $params->{other} ) if $unauthenticated_request;
 
     # -> create response.
@@ -1122,12 +1115,22 @@ sub _search {
 
         $result->{URL_fields_to_append_string} = '';
         $result->{URL_fields_to_append_array} = [];
-        my $fieldmap        = fieldmap();
+        my $fieldmap         = fieldmap();
         my @fields_to_append = grep { $fieldmap->{$_}->{append_to_rest_result} } keys %{$fieldmap};
         for my $field ( @fields_to_append ) {
             $result->{URL_fields_to_append_string} .= "&amp;" . $field . "=" . $other->{$field};
-            push @{ $result->{URL_fields_to_append_array}}, { name => $field, value => $other->{$field} };
+            push @{ $result->{URL_fields_to_append_array} }, { name => $field, value => $other->{$field} };
         }
+        if($other->{'custom_key'} && $other->{'custom_value'}){
+          my $custom_field = _prepare_custom( $other->{'custom_key'}, $other->{'custom_value'} );
+          for my $custom_key ( keys %{$custom_field} ) {
+            $result->{URL_fields_to_append_string} .= "&amp;" . 'custom_key' . "=" . $custom_key;
+            $result->{URL_fields_to_append_string} .= "&amp;" . 'custom_value' . "=" . $custom_field->{$custom_key};
+            push @{ $result->{URL_fields_to_append_array} }, { name => 'custom_key', value => $custom_key };
+            push @{ $result->{URL_fields_to_append_array} }, { name => 'custom_value', value => $custom_field->{$custom_key} };
+          }
+        }
+
         push @{ $response->{results} }, $result;
       }
   }
@@ -1324,6 +1327,24 @@ sub _return_template_error {
   }
 }
 
+=head3 _prepare_custom
+
+=cut
+
+sub _prepare_custom {
+
+    # Take an arrayref of custom keys and an arrayref
+    # of custom values, return a hashref of them
+    my ( $keys, $values ) = @_;
+    my %out = ();
+    if ($keys) {
+        my @k = split( "\0", $keys );
+        my @v = split( "\0", $values );
+        %out = map { $k[$_] => $v[$_] } 0 .. $#k;
+    }
+    return \%out;
+}
+
 =head3 _get_request_details
 
 Given a request, extracts the details from the request and the other patron's
@@ -1334,11 +1355,14 @@ data, and returns a hashref with the details.
 sub _get_request_details {
   my ( $request, $remote_id ) = @_;
 
-  my $result;
-  my $fieldmap               = fieldmap();
-  my @request_details_fields = grep { $fieldmap->{$_}->{is_metadata} } keys %{$fieldmap};
-  for my $field (@request_details_fields) {
-      $result->{$field} = $request->{$field};
+  my $custom =
+    _prepare_custom( $request->{'custom_key'}, $request->{'custom_value'} );
+
+  my $result = {%$custom};
+
+  my $core = fieldmap();
+  foreach my $key ( keys %{$core} ) {
+      $result->{$key} = $request->{$key};
   }
 
   $result->{bib_id} = $remote_id;

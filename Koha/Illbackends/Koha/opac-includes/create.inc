@@ -128,7 +128,11 @@
 
                                             [% FOREACH f IN result.URL_fields_to_append_array %]
                                                 [% IF f.value %]
-                                                    <input type="hidden" name="[% f.name | html %]" value="[% f.value | html %]"/>
+                                                    [% IF f.name == 'custom_key' OR f.name == 'custom_value' %]
+                                                        <input type="hidden" name="[% f.name %]" value="[% f.value %]"/>
+                                                    [% ELSE %]
+                                                        <input type="hidden" name="[% f.name | html %]" value="[% f.value | html %]"/>
+                                                    [% END %]
                                                 [% END %]
                                             [% END %]
 

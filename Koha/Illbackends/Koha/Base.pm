@@ -411,6 +411,7 @@ sub create {
     $request->biblio_id($biblionumber) if $other->{breedingid};
     $request->store;
 
+    delete $request_details->{type_disclaimer_value};
     $request->add_or_update_attributes($request_details);
     $request->add_unauthenticated_data( $params->{other} ) if $unauthenticated_request;
 
@@ -1491,6 +1492,22 @@ sub fieldmap {
         previous_requested_items => {
             label       => 'Previous requested items',
             is_metadata => 1,
+        },
+        type => {
+            is_metadata => 0,
+            append_to_rest_result => 1,
+        },
+        type_disclaimer_value => {
+            is_metadata => 0,
+            append_to_rest_result => 1,
+        },
+        type_disclaimer_submitted => {
+            is_metadata => 0,
+            append_to_rest_result => 1,
+        },
+        copyrightclearance_confirmed => {
+            is_metadata => 0,
+            append_to_rest_result => 1,
         },
     };
 }
